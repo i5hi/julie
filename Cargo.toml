@@ -1,0 +1,30 @@
+[package]
+name = "julie-server"
+version = "0.0.1"
+authors = ["Vishal Menon <vishalmenon.92@gmail.com>"]
+edition = "2018"
+description = "Multi-factor authentication server; inspired by Kerberos."
+
+[dependencies]
+serde = "1.0.112"
+serde_json = "1.0.53"
+serde_derive = "1.0"
+sha2 = "0.9.1"
+base64 = "0.12.0"
+base32 = "0.4.0"
+openssl = "0.10.28"
+ring = "0.16.20"
+rand = "0.8.4"
+oath = "0.10.2"
+jsonwebtoken = "7.2.0"
+rand_seeder = "0.2.2"
+rand_pcg = "0.3.0"
+hex = "0.4.3"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+thiserror = "1.0"
+tokio = { version = "1", features = ["full"] }
+tokio-test = "0.4.2"
+warp = "0.3"
+sled = "0.34.1"
+tracing = "0.1.26"
+tracing-subscriber = "0.2.0"
