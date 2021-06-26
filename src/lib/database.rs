@@ -20,7 +20,8 @@ use std::str;
 use sled::{Db, Tree};
 
 const STORAGE_ROOT: &str = ".satsbank";
-pub const AUTH_TREE: &str = "auth";
+pub const CLIENT_AUTH_TREE: &str = "client/auth";
+pub const SERVER_ID_TREE: &str = "server/identity";
 
 /// Retrieves the primary data store @ $HOME/.satsbank. Database in mongo. 
 pub fn get_root(service: &str) -> Result<Db, String> {

@@ -17,11 +17,13 @@ pub enum S5ErrorKind{
     BasicAuth,
     #[error("RSA Public Key Sucks!")]
     PublicKey,
+    #[error("Totp Sucks!")]
+    BadTotp,
     #[error("!!!Internal Server Error!!!")]
     ServerError,
     #[error("JWT Sucks!")]
     JwtInvalid,
-    #[error("JWT ExpiredS!")]
+    #[error("JWT Expired!")]
     JwtExpired,
 }
 
@@ -70,6 +72,10 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
                 code = StatusCode::BAD_REQUEST;
                 message = "Public Key Sucks!";
             }
+            S5ErrorKind::BadTotp => {
+                code = StatusCode::UNAUTHORIZED;
+                message = "Bad TOTP";
+            }
             S5ErrorKind::ServerError => {
                 code = StatusCode::UNAUTHORIZED;
                 message = "Internal Server Error";
@@ -82,6 +88,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
                 code = StatusCode::UNAUTHORIZED;
                 message = "Expired Token";
             }
+     
         }
     } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
         code = StatusCode::METHOD_NOT_ALLOWED;

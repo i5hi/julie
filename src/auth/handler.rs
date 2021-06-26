@@ -4,7 +4,7 @@ use warp::{self };
 use tracing::instrument;
 use tracing::info;
 
-use crate::auth::storage::{ClientAuth};
+use crate::auth::client::{ClientAuth};
 use crate::lib::error::S5ErrorKind;
 use crate::lib::rsa;
 use crate::lib::hash;
