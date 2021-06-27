@@ -1,9 +1,17 @@
 [package]
-name = "julie-server"
+name = "julie"
 version = "0.0.3"
 authors = ["Vishal Menon <vishalmenon.92@gmail.com>"]
 edition = "2018"
 description = "Multi-factor authentication server; inspired by Kerberos."
+
+[[bin]]
+name = "daemon"
+path = "src/daemon.rs"
+
+[[bin]]
+name = "cli"
+path = "src/cli.rs"
 
 [dependencies]
 serde = "1.0.112"
@@ -28,3 +36,5 @@ warp = "0.3"
 sled = "0.34.1"
 tracing = "0.1.26"
 tracing-subscriber = "0.2.0"
+clap = "2.25.1"
+
