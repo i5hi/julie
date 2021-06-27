@@ -18,14 +18,14 @@ cargo test -- --test-threads 1
 To test the server with the bash client, first create a new user with an apikey
 
 ```bash
-# Uncomment delete so the new user from init_bash_test persists
-nano auth/client.rs
+# Uncomment the last two asserts that delete the clinet and service db entries
+nano auth/core.rs
 # Run the unit test
-cargo test -- --nocapture init_bash_test
+cargo test -- --nocapture core_composite
 # Copy the apikey value into the APIKEY varibale
 nano test/auth.bash
 # Comment out delete again so successive tests will clean up
-nano auth/client.rs
+nano auth/core.rs
 # Start the server
 cargo run
 # Run the server test

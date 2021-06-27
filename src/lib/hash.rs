@@ -1,8 +1,8 @@
 use sha2::{Sha256, Digest};
 
-pub fn sha256(password: &str) -> String {
+pub fn sha256(message: &str) -> String {
     let mut hasher = Sha256::new();
-    hasher.update(password);
+    hasher.update(message);
     let result = hasher.finalize();
     let string = format!("{:x}", result);
     String::from(string)

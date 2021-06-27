@@ -7,7 +7,7 @@ UTIL="/util"
 WALLET="/wallet"
 HCTJSON="Content-type: application/json"
 HACKJSON="Accept: application/json"
-APIKEY=6dee5ddc44f404ea7a1a282769bd9b7ac252406a0329be975365691d77c4d5e6
+APIKEY=aed5d93dd4f75ffc95ccfb1968df9233d682b8a240de5dc7d5ee8308a0b0cd7a
 
 function registration {
     local url="$HOST$AUTH/basic"
@@ -62,11 +62,7 @@ function token {
 
 }
 
-for N in  {1..100}
-do
-	registration&
-done
-
+registration
 #printf "\n"
 #config
 #printf "\n"

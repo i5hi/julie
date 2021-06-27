@@ -19,6 +19,8 @@ pub enum S5ErrorKind{
     PublicKey,
     #[error("Totp Sucks!")]
     BadTotp,
+    #[error("Totp Key Established!")]
+    TotpKeyEstablished,
     #[error("!!!Internal Server Error!!!")]
     ServerError,
     #[error("JWT Sucks!")]
@@ -75,6 +77,10 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
             S5ErrorKind::BadTotp => {
                 code = StatusCode::UNAUTHORIZED;
                 message = "Bad TOTP";
+            }
+            S5ErrorKind::TotpKeyEstablished => {
+                code = StatusCode::CONFLICT;
+                message = "Totp Key Already Established.";
             }
             S5ErrorKind::ServerError => {
                 code = StatusCode::UNAUTHORIZED;

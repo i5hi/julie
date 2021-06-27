@@ -1,8 +1,5 @@
-use std::fmt::Display;
-
 use crate::lib::aes;
 use crate::lib::database;
-use crate::lib::hash;
 
 use serde::{Deserialize, Serialize};
 use std::str;
@@ -229,13 +226,9 @@ mod tests {
 
         assert_eq!(encoded.clone(),encoded_expected.clone());
     
-        // We store a hashed hash
-        // p256 submitted by the user will differ from pass256 in the registered_client
-        // this is because pass256 is the hashed version of the hashed password provided by the client. 
-        // use verify_basic_auth which considers this when checking. do not check manually!
         println!("{:#?}",client_auth.clone());
         assert!(client_auth.clone().update("username",username));
-        assert!(client_auth.clone().update("pass256",&p256));
+        assert!(client_auth.clone().update("pass256",&sha256(&p256)));
         assert!(client_auth.clone().update("level",AuthLevel::Basic.as_str()));
 
         let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
