@@ -33,7 +33,7 @@ pub fn sign(message: &str, private_key: &str)-> String{
     let mut signer = Signer::new(MessageDigest::sha256(), &keypair).unwrap();
     signer.update(message.as_bytes()).unwrap();
     let signature = signer.sign_to_vec().unwrap();
-    println!("{}", base64::encode(&signature));
+    // println!("{}", base64::encode(&signature));
     base64::encode(&signature)
 
 }
