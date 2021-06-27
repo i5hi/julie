@@ -60,13 +60,16 @@ Contains all core modules and tools required by the `auth` module. Can be indepe
 
     - `service`: Defines the data model and storage for a service.
 
+    - `core`: Defines all the core logic for the auth module
+
+    - `handler`: Provides http wrappers for core.
+
     - `router`: Declares the http api exposed by the `auth` module.
 
-    - `handler`: Http wrappers and core logic for handling authentication. Core logic can be decoupled from http implementation by moving it to a `auth.rs` file. 
 
 ### priorities
 
-1. core: 
+1. coorect-tooling: 
 
 Our primary focus is on creating correct `lib` tools for all the provided authentication methods. This is the core of the project and also the easiest way to contribute as they are independently testable units. All lib units must return  `Result` types and properly handle errors and not panic.
 
