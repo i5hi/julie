@@ -1,4 +1,4 @@
-# julie-server
+# julie
 
 *NOTE*: This project is in extereme BETA. Currently only for learning. It will be versioned such that v^1 will be stable for production use.
 
