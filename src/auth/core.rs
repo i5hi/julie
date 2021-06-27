@@ -73,15 +73,10 @@ pub fn verify_basic_auth(client: ClientAuth, basic_auth_encoded: String)->bool{
     }
 }
 pub fn verify_signature(client: ClientAuth, message: &str, signature: &str)->bool{
-    if client.level == AuthLevel::Signature || client.level == AuthLevel::MultiFactor{
-        rsa::verify(&message, &signature, &client.public_key)
-    }
-    else {
-        true
-    }
+    rsa::verify(&message, &signature, &client.public_key)
+
 }
 pub fn verify_totp(client: ClientAuth, otp: u64)->bool{
-    if client.level == AuthLevel::Totp || client.level == AuthLevel::MultiFactor{
     if totp::generate_otp(client.clone().totp_key, HashType::SHA1)==otp {
         match client.clone().level{
             AuthLevel::ApiKey=>client.clone().update("level",AuthLevel::Totp.as_str()),
@@ -92,10 +87,6 @@ pub fn verify_totp(client: ClientAuth, otp: u64)->bool{
     }
     else{
         false
-    }
-    }
-    else{
-        true
     }
 }
 pub fn issue_token(client: ClientAuth, service_name: &str)->Option<String>{

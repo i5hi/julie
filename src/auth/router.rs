@@ -18,6 +18,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and_then(handler::handle_put_basic)
         .recover(error::handle_rejection)
         .with(warp::trace::named("auth-put-basic"));
+        
     let put_pubkey = auth_root
         .and(warp::path("pubkey"))
         .and(warp::put())
