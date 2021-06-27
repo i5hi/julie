@@ -77,5 +77,5 @@ Our primary focus is on creating correct `lib` tools for all the provided authen
 
 We want to create a correct implementation of our chosen http server library (warp) and create an async friendly http service. `async` in rust is still new to us and we are certainly not using it as effectively as we could. 
 
-3. interfaces: finally, it would be nice to decouple `sled` from the storage model and `warp` from the core-logic by creating an interface for both. This will allow users to implement alternative server and databases of their choice - without having to meddle with core logic.
+3. interfaces: finally, it would be nice to decouple `sled` from the storage model.
 
