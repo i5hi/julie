@@ -43,7 +43,7 @@ impl ServiceIdentity {
             shared_secret: shared_secret.to_string(),
         }
     }
-    /// Get ServiceIdentity structure using apikey
+    /// Get ServiceIdentity structure using name
     pub fn init(name: &str) -> Option<Self>{
         let sid = match get_sid_from(name){
             Some(sid)=>sid,

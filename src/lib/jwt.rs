@@ -6,25 +6,27 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey, errors::ErrorKind};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     iss: String,
     aud: String,
     exp: u64,
-    uid: String
+    uid: String,
+    level: String,
 }
 
-pub fn issue(uid: String,key: String)->String{
+pub fn issue(uid: String,key: String, service:String, level: String)->String{
     let my_claims = Claims {
-        iss: String::from("satsbank.io"),
-        aud: String::from("client.satsbank.io"),
+        iss: String::from("julie"),
+        aud: service,
         exp: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
-        uid: uid
+        uid: uid,
+        level: level
     };
     encode(&Header::default(), &my_claims, &EncodingKey::from_secret(key.as_str().as_ref())).unwrap()
 }
-pub fn verify(token:String, key:String)->Result<String,S5ErrorKind>{ // return uid if true
+pub fn verify(token:String, key:String)->Result<Claims,S5ErrorKind>{ // return uid if true
     match decode::<Claims>(&token, &DecodingKey::from_secret(key.as_str().as_ref()), &Validation::default()){
-       Ok(c) => Ok(c.claims.uid),
+       Ok(c) => Ok(c.claims),
        Err(err) => match *err.kind() {
            ErrorKind::InvalidToken => Err(S5ErrorKind::JwtInvalid),
            ErrorKind::Base64(DecodeError::InvalidLength) => Err(S5ErrorKind::JwtInvalid),
@@ -44,7 +46,9 @@ mod tests {
     fn issue_jwt() {
         let key = String::from("superseecret");
         let uid  = String::from("s5idVishalMenon");
-        println!("JWT: {}",issue(uid,key));
+        let service = "satsbank.io".to_string();
+        let level = "Zero".to_string();
+        println!("JWT: {}",issue(uid,key,service,level));
     }
     #[test]
     fn verify_jwt_invalid(){

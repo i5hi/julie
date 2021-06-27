@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::lib::aes;
 use crate::lib::database;
 use crate::lib::hash;
@@ -23,7 +25,17 @@ pub enum AuthLevel{
     /// MultiFactor is if both Totp and Signature are required.
     MultiFactor,
 }
-
+impl AuthLevel {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            AuthLevel::ApiKey=>"ApiKey",
+            AuthLevel::Basic=>"Basic",
+            AuthLevel::Signature=>"Signature",
+            AuthLevel::Totp=>"Totp",
+            AuthLevel::MultiFactor=>"MultiFactor"
+        }
+    }
+}
 impl FromStr for AuthLevel{
     type Err = ();
 
