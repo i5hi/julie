@@ -26,8 +26,8 @@ cargo test -- --nocapture core_composite
 nano test/auth.bash
 # Comment out delete again so successive tests will clean up
 nano auth/core.rs
-# Start the server
-cargo run
+# Start the daemon
+cargo run --bin daemon
 # Run the server test
 bash test/auth.bash
 ```
