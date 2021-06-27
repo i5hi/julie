@@ -23,7 +23,7 @@ pub struct AuthRegister {
 /// Handle a warp http request to register basic auth username and pass256.
 pub async fn handle_put_basic(client:Result<ClientAuth,warp::Rejection>, auth_register: AuthRegister) -> Result<impl warp::Reply,warp::Rejection>{
     let client =  client?;
-    let client = client.update_basic_auth(&auth_register.username, &auth_register.pass256).await;
+    let client = core::update_basic_auth(client, &auth_register.username, &auth_register.pass256);
     Ok(warp::reply::json(&client))
 }
 /// A warp filter for apikey auth

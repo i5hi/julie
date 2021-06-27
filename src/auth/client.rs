@@ -68,7 +68,7 @@ pub struct ClientAuth {
 impl ClientAuth {
     /// Used by the admin to create a new client with a uid and apikey index.
     pub fn new() -> Self {
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
+        let root = database::get_root(database::CLIENT_TREE).unwrap();
         let uid = format!("s5uid-{}", Uuid::new_v4());
         let main_tree = database::get_tree(root.clone(), &uid).unwrap();
 
@@ -89,6 +89,8 @@ impl ClientAuth {
         main_tree.insert(b"level", format!("{:#?}",AuthLevel::ApiKey).as_bytes()).unwrap();
 
         main_tree.flush().unwrap();
+        root.flush().unwrap();
+
 
         ClientAuth {
             uid: uid.to_string(),
@@ -115,7 +117,7 @@ impl ClientAuth {
     }
     /// Get a ClientAuth structure using uid
     pub fn read(uid: &str) -> Option<Self> {
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
+        let root = database::get_root(database::CLIENT_TREE).unwrap();
         let main_tree = database::get_tree(root, uid).unwrap();
 
         // if this tree exists return it
@@ -145,54 +147,17 @@ impl ClientAuth {
             None
         }
     }
-    pub async fn update_basic_auth(&self, username: &str, pass256: &str) -> Self {
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
-        let main_tree = database::get_tree(root, &self.clone().uid).unwrap();
-    
-        main_tree.insert(b"username", username.as_bytes()).unwrap();
-        main_tree.insert(b"pass256", hash::sha256(pass256).as_bytes()).unwrap();
-        main_tree.flush().unwrap();
-        let mut updated = self.clone();
-        updated.username = username.to_string();
-        updated.pass256 = hash::sha256(pass256);
-        updated.clone()
-    
-    }
-    pub fn update_public_key(&self, public_key: &str) -> Self {
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
-        let main_tree = database::get_tree(root, &self.clone().uid).unwrap();
+    pub fn update(&self, key: &str, value: &str)->bool{
+        let root = database::get_root(database::CLIENT_TREE).unwrap();
+        let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
 
-        main_tree.insert(b"public_key", public_key.as_bytes()).unwrap();
+        main_tree.insert(key.as_bytes(), value.as_bytes()).unwrap();
         main_tree.flush().unwrap();
-        let mut updated = self.clone();
-        updated.public_key = public_key.to_string();
-        updated.clone()
-    }
-    pub async fn update_totp_key(&self, key: &str) -> Self {
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
-        let main_tree = database::get_tree(root, &self.clone().uid).unwrap();
-    
-        main_tree.insert(b"totp_key", key.as_bytes()).unwrap();
-        main_tree.flush().unwrap();
-
-        let mut updated = self.clone();
-        updated.totp_key = key.to_string();
-        updated.clone()
-
-    
-    }
-    /// It is up to the implementor to appropriately update a clients AuthLevel
-    pub fn update_level(&self,level:AuthLevel)->Self{
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
-        let main_tree = database::get_tree(root, &self.clone().uid).unwrap();
-        main_tree.insert(b"level", format!("{:#?}",level).as_bytes()).unwrap();
-        main_tree.flush().unwrap();
-        let mut updated = self.clone();
-        updated.level = level;
-        updated.clone()
+        root.flush().unwrap();
+        true
     }
     pub fn delete(&self)->bool{
-        let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
+        let root = database::get_root(database::CLIENT_TREE).unwrap();
         let main_tree = database::get_tree(root.clone(), &self.uid).unwrap();
         let apikey_tree = database::get_tree(root.clone(), &self.apikey.clone()).unwrap();
 
@@ -206,6 +171,8 @@ impl ClientAuth {
         main_tree.remove(b"public_key").unwrap();
         main_tree.remove(b"totp_key").unwrap();
         main_tree.remove(b"level").unwrap();
+        main_tree.flush().unwrap();
+        root.flush().unwrap();
 
 
         true
@@ -216,7 +183,7 @@ impl ClientAuth {
 
 /// All methods use uid as the primary index. Incase only an apikey is presented, the uid index can be retrieved with this function.
 fn get_uid_from(apikey: &str) -> Option<String> {
-    let root = database::get_root(database::CLIENT_AUTH_TREE).unwrap();
+    let root = database::get_root(database::CLIENT_TREE).unwrap();
     let apikey_tree = database::get_tree(root.clone(), apikey).unwrap();
 
     if apikey_tree.contains_key(b"uid").unwrap() {
@@ -234,14 +201,14 @@ mod tests {
     use std::fs::File;
     use std::io::prelude::*;
 
-    macro_rules! wait {
-        ($e:expr) => {
-            tokio_test::block_on($e)
-        };
-    }
+    // macro_rules! wait {
+    //     ($e:expr) => {
+    //         tokio_test::block_on($e)
+    //     };
+    // }
 
     #[test]
-    fn auth_composite() {
+    fn client_composite() {
         // client asks admin to initialize a user account
         let client_auth = ClientAuth::new();
         // admin gives client this new client_auth with an apikey
@@ -266,16 +233,17 @@ mod tests {
         // p256 submitted by the user will differ from pass256 in the registered_client
         // this is because pass256 is the hashed version of the hashed password provided by the client. 
         // use verify_basic_auth which considers this when checking. do not check manually!
+        println!("{:#?}",client_auth.clone());
+        assert!(client_auth.clone().update("username",username));
+        assert!(client_auth.clone().update("pass256",&p256));
+        assert!(client_auth.clone().update("level",AuthLevel::Basic.as_str()));
 
-        let registered_client = wait!(client_auth.update_basic_auth(username, &p256));
-        let registered_client = registered_client.update_level(AuthLevel::Basic);
         let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
-        let configured_client = registered_client.update_public_key(&public_key);
-        let configured_client = configured_client.update_level(AuthLevel::Signature);
+        assert!(client_auth.clone().update("public_key",&public_key));
+        assert!(client_auth.clone().update("level",AuthLevel::Signature.as_str()));
 
-        println!("{:#?}", configured_client);
 
-        let read_client = ClientAuth::read(&configured_client.uid).unwrap();
+        let read_client = ClientAuth::read(&client_auth.clone().uid).unwrap();
         println!("{:#?}", read_client.clone());
 
         assert_eq!(

@@ -20,8 +20,8 @@ use std::str;
 use sled::{Db, Tree};
 
 const STORAGE_ROOT: &str = ".satsbank";
-pub const CLIENT_AUTH_TREE: &str = "client/auth";
-pub const SERVER_ID_TREE: &str = "server/identity";
+pub const CLIENT_TREE: &str = "client";
+pub const SERVICE_TREE: &str = "service";
 
 /// Retrieves the primary data store @ $HOME/.satsbank. Database in mongo. 
 pub fn get_root(service: &str) -> Result<Db, String> {
@@ -50,7 +50,7 @@ mod tests {
 
     #[test]
     fn db_composite() {
-        let service = "auth";
+        let service = "client";
         let index = "s5idsatswala9010";
         let root = get_root(service).unwrap();
         let tree = get_tree(root, index.clone()).unwrap();

@@ -13,6 +13,17 @@ use crate::lib::error::S5ErrorKind;
 use oath::{HashType};
 
 
+pub fn update_basic_auth(client: ClientAuth, username: &str, pass256: &str)->ClientAuth{
+    client.clone().update("username",username);
+    client.clone().update("pass256",&hash::sha256(pass256));
+    let client = ClientAuth::read(&client.clone().uid).unwrap();
+    match client.clone().level{
+        AuthLevel::ApiKey=>client.update("level",AuthLevel::Basic.as_str()),
+        _=>false,
+    };
+    client
+
+}
 /// Since this initializes the auth process, we return a ClientAuth, where other verification functions return bool
 pub fn verify_apikey(apikey: &str)->Option<ClientAuth>{
     ClientAuth::init(&apikey)
@@ -55,12 +66,8 @@ pub fn issue_token(client: ClientAuth, service_name: &str)->Option<String>{
 mod tests {
     use super::*;
     use crate::lib::hash::sha256;
-    use crate::lib::rsa;
-    macro_rules! wait {
-        ($e:expr) => {
-            tokio_test::block_on($e)
-        };
-    }
+    // use crate::lib::rsa;
+
     #[test]
     fn core_composite() { 
         let client_auth = ClientAuth::new();
@@ -87,8 +94,7 @@ mod tests {
         // this is because pass256 is the hashed version of the hashed password provided by the client. 
         // use verify_basic_auth which considers this when checking. do not check manually!
 
-        let registered_client = wait!(client_auth.update_basic_auth(username, &p256));
-        let registered_client = registered_client.update_level(AuthLevel::Basic);
+        let registered_client = update_basic_auth(client_auth, username, &p256.clone());
    
         let ready_client = verify_apikey(&registered_client.apikey).unwrap();
         let basic_status = verify_basic_auth(ready_client.clone(), encoded);
