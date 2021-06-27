@@ -69,7 +69,7 @@ Contains all core modules and tools required by the `auth` module. Can be indepe
 
 ### priorities
 
-1. coorect-tooling: 
+1. correct-tooling: 
 
 Our primary focus is on creating correct `lib` tools for all the provided authentication methods. This is the core of the project and also the easiest way to contribute as they are independently testable units. All lib units must return  `Result` types and properly handle errors and not panic.
 
@@ -77,5 +77,5 @@ Our primary focus is on creating correct `lib` tools for all the provided authen
 
 We want to create a correct implementation of our chosen http server library (warp) and create an async friendly http service. `async` in rust is still new to us and we are certainly not using it as effectively as we could. 
 
-3. interfaces: finally, it would be nice to decouple `sled` from the storage model.
+3. database-interface: finally, it would be nice to decouple `sled` from the storage model.
 
