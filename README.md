@@ -15,21 +15,19 @@ cargo test -- --test-threads 1
 ```
 
 ### integration
-To test the daemon with the bash client, first create a new client with an apikeyd
+To test the daemon with the bash client, first create a new client with the cli
 
 ```bash
 # Uncomment the last two asserts that delete the clinet and service db entries
-nano auth/core.rs
-# Run the unit test
-cargo test -- --nocapture core_composite
-# Copy the apikey value into the APIKEY varibale
+cargo run --bin cli client register
+# Add the api key to the test client file
 nano test/auth.bash
-# Comment out delete again so successive tests will clean up
-nano auth/core.rs
 # Start the daemon
 cargo run --bin daemon
-# Run the server test
-bash test/auth.bash
+# Run the integration test
+bash auth.bash
+# NOTE: THIS TEST MUTATES YOUR STATE. 
+# Investigate using the cli tool and clean up with the delete subcommands
 ```
 
 ## goals

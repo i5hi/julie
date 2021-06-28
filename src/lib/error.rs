@@ -53,10 +53,14 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
     if err.is_not_found() {
         code = StatusCode::NOT_FOUND;
         message = "Not Found";
+    }else if let Some(_) = err.find::<warp::reject::InvalidQuery>() {
+        code = StatusCode::BAD_REQUEST;
+        message = "Bad Query Params";
     } else if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
         code = StatusCode::BAD_REQUEST;
         message = "Invalid Body";
-    } else if let Some(e) = err.find::<S5ErrorKind>() {
+    }
+     else if let Some(e) = err.find::<S5ErrorKind>() {
         match e {
             S5ErrorKind::ApiKey => {
                 code = StatusCode::UNAUTHORIZED;

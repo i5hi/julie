@@ -17,7 +17,7 @@ use std::env;
 use std::str;
 // use std::fs;
 
-use sled::{Db, Tree,IVec};
+use sled::{Db, Tree};
 
 const STORAGE_ROOT: &str = ".satsbank"; // Database
 pub const CLIENT: &str = "client"; // Collection

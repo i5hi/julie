@@ -63,7 +63,7 @@ pub fn verify_basic_auth(client: ClientAuth, basic_auth_encoded: String)->bool{
         .to_string();
     let parts = decoded_auth.split(":").collect::<Vec<&str>>();
     let username = parts[0];
-    let pass256 = hash::sha256(&parts[1][0..64]);
+    let pass256 = hash::sha256(&parts[1]);
 
     
     if &pass256 == &client.pass256 && username == &client.username {

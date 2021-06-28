@@ -62,7 +62,7 @@ fn main() {
     match matches.subcommand() {
         ("info", Some(_)) => {
 
-            match reqwest::blocking::get("localhost:3030/auth/health"){
+            match reqwest::blocking::get("http://localhost:3030/auth/health"){
                 Ok(response)=>{
                     println!("{:?}",  response.text().unwrap());
                 }
