@@ -47,6 +47,11 @@ fn main() {
                         .required(true)
                         .help("The name of the service being registered."),
                     )
+                    .arg(
+                        Arg::with_name("key")
+                        .required(true)
+                        .help("Shared key to use to sign tokens for this service"),
+                    )
                 )
                 .subcommand(
                     App::new("delete").about("Deletes and existing service")
@@ -54,11 +59,6 @@ fn main() {
                         Arg::with_name("name")
                         .required(true)
                         .help("The name of the client to delete."),
-                    )
-                    .arg(
-                        Arg::with_name("key")
-                        .required(true)
-                        .help("Shared key to use to sign tokens for this service"),
                     )
                 )
                 .subcommand(App::new("list").about("Lists all existing service sids")),
