@@ -1,3 +1,6 @@
+/// NOTE: 
+/// Every time you create a tree, you have to call drop on it if it is not used or else it leaves behind an empty index.
+
 use crate::lib::aes;
 use crate::lib::database;
 
@@ -59,7 +62,7 @@ impl ServiceIdentity {
     /// Get a ServiceIdentity structure using uid
     pub fn read(sid: &str) -> Option<Self> {
         let root = database::get_root(database::SERVICE).unwrap();
-        let main_tree = database::get_tree(root, sid).unwrap();
+        let main_tree = database::get_tree(root.clone(), sid).unwrap();
 
         // if this tree exists return it
         if main_tree.contains_key(b"name").unwrap() {
@@ -75,6 +78,7 @@ impl ServiceIdentity {
                     .to_string(),
             })
         } else {
+            root.drop_tree(&main_tree.name()).unwrap();
             None
         }
     }
@@ -92,16 +96,21 @@ impl ServiceIdentity {
  
  
     pub fn delete(&self)->bool{
+    
         let root = database::get_root(database::SERVICE).unwrap();
-        let main_tree = database::get_tree(root.clone(), &self.sid).unwrap();
-        let name_tree = database::get_tree(root.clone(), &self.name.clone()).unwrap();
+        // println!("{:?}", str::from_utf8(&main_tree.name()).unwrap());
+        // println!("{:?}", str::from_utf8(&apikey_tree.name()).unwrap());
+        let main_tree = database::get_tree(root.clone(), &self.clone().sid).unwrap();
+        let name_tree = database::get_tree(root.clone(), &self.clone().name).unwrap();
 
-        name_tree.remove(b"sid").unwrap();
-        name_tree.remove(b"name").unwrap();
-        
-        main_tree.remove(b"sid").unwrap();
-        main_tree.remove(b"name").unwrap();
-        main_tree.remove(b"shared_secret").unwrap();
+        main_tree.clear().unwrap();
+        main_tree.flush().unwrap();
+        root.drop_tree(&main_tree.name()).unwrap();
+        name_tree.clear().unwrap();
+        name_tree.flush().unwrap();
+        root.drop_tree(&name_tree.name()).unwrap();
+
+        root.flush().unwrap();
 
         true
 
@@ -117,9 +126,63 @@ fn get_sid_from(name: &str) -> Option<String> {
     if name_tree.contains_key(b"sid").unwrap() {
        Some(str::from_utf8(&name_tree.get(b"sid").unwrap().unwrap().to_vec()).unwrap().to_string())
     } else {
+        root.drop_tree(&name_tree.name()).unwrap();
         None
     }
 
+}
+
+
+/// Retrives all tree indexes in a db
+pub fn get_sid_indexes() -> Vec<String>{
+    let root = database::get_root(database::SERVICE).unwrap();
+    let mut uids: Vec<String> = [].to_vec();
+    for key in root.tree_names().iter() {
+        let uid = str::from_utf8(key).unwrap();
+        if uid.starts_with("s5sid"){
+            uids.push(uid.to_string());
+        }
+        else{
+
+        };
+    }
+    uids
+}
+/// Retrives all tree indexes in a db
+pub fn get_name_indexes() -> Vec<String>{
+    let root = database::get_root(database::SERVICE).unwrap();
+    let mut names: Vec<String> = [].to_vec();
+    for key in root.tree_names().iter() {
+        let name = str::from_utf8(key).unwrap();
+        if !name.starts_with("s5sid") && name != "__sled__default"{
+            names.push(name.to_string());
+        }
+        else{
+
+        };
+    }
+    names
+}
+/// Removes all trees in a db. Careful with that axe, Eugene.
+pub fn remove_service_trees() -> bool {
+    let root = database::get_root(database::SERVICE).unwrap();
+    for key in root.tree_names().iter() {
+        let index = str::from_utf8(key).unwrap();
+        let tree = database::get_tree(root.clone(),index).unwrap();
+        // println!("Name: {:?}",str::from_utf8(&tree.name()).unwrap());
+        tree.clear().unwrap();
+        tree.flush().unwrap();
+        if str::from_utf8(&tree.name()).unwrap() != "__sled__default" {
+            root.drop_tree(&tree.name()).unwrap();
+        }
+        else{
+
+        }
+
+    }
+    root.flush().unwrap();
+
+    true
 }
 
 #[cfg(test)]
@@ -127,12 +190,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ticket_storage_composite() {
+    fn service_composite() {
         // client asks admin to initialize a user account
         let service_id = ServiceIdentity::new("satoshipay");
         // admin gives client this new client_auth with an apikey
+        let indexes = get_sid_indexes();
+        println!("{:#?}",get_sid_indexes());
+        println!("{:#?}",get_name_indexes());
+
+        
+        assert!(indexes.contains(&service_id.clone().sid));
         assert_eq!(service_id.clone().delete(),true);
-        println!("{:#?}",service_id);
+
         let delete_status = match ServiceIdentity::read(&service_id.sid){
             Some(_)=>false,
             None=>true
@@ -140,6 +209,16 @@ mod tests {
 
         assert!(delete_status);
     }
+
+        // Careful with that axe, Eugene
+        /// This must always be ignored on master or it will delete all your stuff
+        #[test] #[ignore]
+        fn delete_all_services(){
+            let status = remove_service_trees();
+            assert!(status);
+            assert_eq!(get_sid_indexes().len(),0);
+    
+        }
 
 
 }

@@ -160,13 +160,14 @@ impl ClientAuth {
         // println!("{:?}", str::from_utf8(&main_tree.name()).unwrap());
         // println!("{:?}", str::from_utf8(&apikey_tree.name()).unwrap());
         let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
+        let apikey_tree = database::get_tree(root.clone(), &self.clone().apikey).unwrap();
+
         main_tree.clear().unwrap();
         main_tree.flush().unwrap();
-        let drop_status = root.drop_tree(&main_tree.name()).unwrap();
-        let apikey_tree = database::get_tree(root.clone(), &self.clone().apikey).unwrap();
+        root.drop_tree(&main_tree.name()).unwrap();
         apikey_tree.clear().unwrap();
         apikey_tree.flush().unwrap();
-        let drop_status = root.drop_tree(&apikey_tree.name()).unwrap();
+        root.drop_tree(&apikey_tree.name()).unwrap();
 
         root.flush().unwrap();
 
@@ -184,6 +185,7 @@ fn get_uid_from(apikey: &str) -> Option<String> {
     if apikey_tree.contains_key(b"uid").unwrap() {
        Some(str::from_utf8(&apikey_tree.get(b"uid").unwrap().unwrap().to_vec()).unwrap().to_string())
     } else {
+        root.drop_tree(&apikey_tree.name()).unwrap();
         None
     }
 
@@ -297,8 +299,9 @@ mod tests {
         assert!(delete_status);
     }
     // Careful with that axe, Eugene
-    #[test]
-    fn delete_clients(){
+    /// This must always be ignored on master or it will delete all your stuff    
+    #[test] #[ignore]
+    fn delete_all_clients(){
         let status = remove_client_trees();
         assert!(status);
         assert_eq!(get_uid_indexes().len(),0);

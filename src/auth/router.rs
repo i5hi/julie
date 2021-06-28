@@ -74,11 +74,22 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .recover(error::handle_rejection)
         .with(warp::trace::named("auth-post-totp"));
 
+    let health =auth_root
+    .and(warp::path("health"))
+    .and(warp::get())
+    .and(warp::header("user-agent"))
+    .map(|agent: String| {
+        format!("Hello agent {}", agent)
+    })
+    .recover(error::handle_rejection)
+    .with(warp::trace::named("health"));
+
     let auth_routes = put_basic
         .or(put_pubkey)
         .or(get_totp)
         .or(post_totp)
         .or(get_token)
+        .or(health)
         .with(warp::trace::request());
 
     auth_routes
