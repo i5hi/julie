@@ -17,27 +17,27 @@ use std::env;
 use std::str;
 // use std::fs;
 
-use sled::{Db, Tree};
+use sled::{Db, Tree,IVec};
 
-const STORAGE_ROOT: &str = ".satsbank";
-pub const CLIENT_TREE: &str = "client";
-pub const SERVICE_TREE: &str = "service";
+const STORAGE_ROOT: &str = ".satsbank"; // Database
+pub const CLIENT: &str = "client"; // Collection
+pub const SERVICE: &str = "service";
 
-/// Retrieves the primary data store @ $HOME/.satsbank. Database in mongo. 
-pub fn get_root(service: &str) -> Result<Db, String> {
-    let service_storage_path: String =
-        format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, service).to_string();
-    match sled::open(service_storage_path.clone()) {
+/// Retrieves the primary data store @ $HOME/.satsbank. Database + Collection in mongo. 
+pub fn get_root(db: &str) -> Result<Db, String> {
+    let db_storage_path: String =
+        format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, db).to_string();
+    match sled::open(db_storage_path.clone()) {
         Ok(db) => Ok(db),
-        Err(_) => Err(format!("E:DB Open @ {} FAILED.", service_storage_path).to_string()),
+        Err(_) => Err(format!("E:DB Open @ {} FAILED.", db_storage_path).to_string()),
     }
 }
 
-/// Retrieves a specific tree from the root. Collection in mongo.
-pub fn get_tree(root: Db, tree: &str) -> Result<Tree, String> {
-    match root.open_tree(tree.clone().as_bytes()) {
+/// Retrieves a specific tree from the root. Document.
+pub fn get_tree(root: Db, index: &str) -> Result<Tree, String> {
+    match root.open_tree(index.clone().as_bytes()) {
         Ok(db) => Ok(db),
-        Err(_) => Err(format!("E:Tree Open @ {} FAILED.", tree).to_string()),
+        Err(_) => Err(format!("E:Tree Open @ {} FAILED.", index).to_string()),
     }
 }
 
@@ -50,9 +50,9 @@ mod tests {
 
     #[test]
     fn db_composite() {
-        let service = "client";
         let index = "s5idsatswala9010";
-        let root = get_root(service).unwrap();
+        let root = get_root(CLIENT).unwrap();
+        
         let tree = get_tree(root, index.clone()).unwrap();
 
         let status = tree.contains_key(b"uid");
@@ -67,38 +67,10 @@ mod tests {
             }
         }
 
-  
-
-
         // tree.insert(b"uid", index.as_bytes()).unwrap();
 
         tree.flush().unwrap();
 
     }
 }
-
-
-/*
-pub fn _get_indexes(service: &str) -> Result<Vec<String>, String>{
-    let root_path: String =
-    format!("{}/{}/{}", env::var("HOME").unwrap(), _STORAGE_ROOT, service).to_string();
-
-    let dirs = match fs::read_dir(root_path.clone()){
-        Ok(result)=>result,
-        Err(_)=> return Err(format!("E:Tree read @ {} FAILED.", root_path).to_string()),
-    };
-
-    let mut indexes: Vec<String>=vec![];
-
-    for entry in dirs {
-        let path = entry.unwrap().path();
-        if path.is_dir(){
-            indexes.push(format!("{}",path.clone().display()));
-        }
-    };
-
-    Ok(indexes)
-
-}
-*/
 

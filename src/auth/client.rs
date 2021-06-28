@@ -66,7 +66,7 @@ pub struct ClientAuth {
 impl ClientAuth {
     /// Used by the admin to create a new client with a uid and apikey index.
     pub fn new() -> Self {
-        let root = database::get_root(database::CLIENT_TREE).unwrap();
+        let root = database::get_root(database::CLIENT).unwrap();
         let uid = format!("s5uid-{}", Uuid::new_v4());
         let main_tree = database::get_tree(root.clone(), &uid).unwrap();
 
@@ -115,8 +115,8 @@ impl ClientAuth {
     }
     /// Get a ClientAuth structure using uid
     pub fn read(uid: &str) -> Option<Self> {
-        let root = database::get_root(database::CLIENT_TREE).unwrap();
-        let main_tree = database::get_tree(root, uid).unwrap();
+        let root = database::get_root(database::CLIENT).unwrap();
+        let main_tree = database::get_tree(root.clone(), uid).unwrap();
 
         // if this tree exists return it
         if main_tree.contains_key(b"apikey").unwrap() {
@@ -142,11 +142,12 @@ impl ClientAuth {
                 level: AuthLevel::from_str(str::from_utf8(&main_tree.get(b"level").unwrap().unwrap().to_vec()).unwrap()).unwrap(),
             })
         } else {
+            root.drop_tree(&main_tree.name()).unwrap();
             None
         }
     }
     pub fn update(&self, key: &str, value: &str)->bool{
-        let root = database::get_root(database::CLIENT_TREE).unwrap();
+        let root = database::get_root(database::CLIENT).unwrap();
         let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
 
         main_tree.insert(key.as_bytes(), value.as_bytes()).unwrap();
@@ -155,23 +156,21 @@ impl ClientAuth {
         true
     }
     pub fn delete(&self)->bool{
-        let root = database::get_root(database::CLIENT_TREE).unwrap();
-        let main_tree = database::get_tree(root.clone(), &self.uid).unwrap();
-        let apikey_tree = database::get_tree(root.clone(), &self.apikey.clone()).unwrap();
-
-        apikey_tree.remove(b"uid").unwrap();
-        apikey_tree.remove(b"apikey").unwrap();
-        
-        main_tree.remove(b"uid").unwrap();
-        main_tree.remove(b"apikey").unwrap();
-        main_tree.remove(b"username").unwrap();
-        main_tree.remove(b"pass256").unwrap();
-        main_tree.remove(b"public_key").unwrap();
-        main_tree.remove(b"totp_key").unwrap();
-        main_tree.remove(b"level").unwrap();
+        let root = database::get_root(database::CLIENT).unwrap();
+        // println!("{:?}", str::from_utf8(&main_tree.name()).unwrap());
+        // println!("{:?}", str::from_utf8(&apikey_tree.name()).unwrap());
+        let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
+        main_tree.clear().unwrap();
         main_tree.flush().unwrap();
-        root.flush().unwrap();
+        let drop_status = root.drop_tree(&main_tree.name()).unwrap();
+        println!("dropped main tree: {:?}",drop_status.clone());
+        let apikey_tree = database::get_tree(root.clone(), &self.clone().apikey).unwrap();
+        apikey_tree.clear().unwrap();
+        apikey_tree.flush().unwrap();
+        let drop_status = root.drop_tree(&apikey_tree.name()).unwrap();
+        println!("dropped apikey tree: {:?}",drop_status.clone());
 
+        root.flush().unwrap();
 
         true
 
@@ -181,7 +180,7 @@ impl ClientAuth {
 
 /// All methods use uid as the primary index. Incase only an apikey is presented, the uid index can be retrieved with this function.
 fn get_uid_from(apikey: &str) -> Option<String> {
-    let root = database::get_root(database::CLIENT_TREE).unwrap();
+    let root = database::get_root(database::CLIENT).unwrap();
     let apikey_tree = database::get_tree(root.clone(), apikey).unwrap();
 
     if apikey_tree.contains_key(b"uid").unwrap() {
@@ -190,6 +189,43 @@ fn get_uid_from(apikey: &str) -> Option<String> {
         None
     }
 
+}
+
+/// Retrives all tree indexes in a db
+pub fn get_client_uids() -> Vec<String>{
+    let root = database::get_root(database::CLIENT).unwrap();
+    let mut uids: Vec<String> = [].to_vec();
+    for key in root.tree_names().iter() {
+        let uid = str::from_utf8(key).unwrap();
+        if uid.starts_with("s5uid"){
+            uids.push(uid.to_string());
+        }
+        else{
+
+        };
+    }
+    uids
+}
+/// Removes all trees in a db. Careful with that axe, Eugene.
+pub fn remove_client_trees() -> bool {
+    let root = database::get_root(database::CLIENT).unwrap();
+    for key in root.tree_names().iter() {
+        let index = str::from_utf8(key).unwrap();
+        let tree = database::get_tree(root.clone(),index).unwrap();
+        // println!("Name: {:?}",str::from_utf8(&tree.name()).unwrap());
+        tree.clear().unwrap();
+        tree.flush().unwrap();
+        if str::from_utf8(&tree.name()).unwrap() != "__sled__default" {
+            root.drop_tree(&tree.name()).unwrap();
+        }
+        else{
+
+        }
+
+    }
+    root.flush().unwrap();
+
+    true
 }
 
 #[cfg(test)]
@@ -210,6 +246,9 @@ mod tests {
         // client asks admin to initialize a user account
         let client_auth = ClientAuth::new();
         // admin gives client this new client_auth with an apikey
+        let indexes = get_client_uids();
+        println!("#Clients: {}", indexes.len());
+        println!("{:?}", indexes);
 
         // client then registers a username and password
         let username = "vmd";
@@ -227,7 +266,7 @@ mod tests {
 
         assert_eq!(encoded.clone(),encoded_expected.clone());
     
-        println!("{:#?}",client_auth.clone());
+        // println!("{:#?}",client_auth.clone());
         assert!(client_auth.clone().update("username",username));
         assert!(client_auth.clone().update("pass256",&sha256(&p256)));
         assert!(client_auth.clone().update("level",AuthLevel::Basic.as_str()));
@@ -238,23 +277,35 @@ mod tests {
 
 
         let read_client = ClientAuth::read(&client_auth.clone().uid).unwrap();
-        println!("{:#?}", read_client.clone());
+        // println!("{:#?}", read_client.clone());
 
         assert_eq!(
             get_uid_from(&read_client.clone().apikey).unwrap(),
             read_client.clone().uid
         );
-        assert_eq!(read_client.clone().delete(),true);
-
+        // assert_eq!(read_client.clone().delete(),true);
+        
+        println!("{:#?}", read_client.clone());
+   
+        read_client.delete();
         let delete_status = match ClientAuth::read(&read_client.uid){
-            Some(_)=>false,
+            Some(item)=>{
+                println!("{:?}",item);
+                false
+            },
             None=>true
         };
 
         assert!(delete_status);
     }
+    // Careful with that axe, Eugene
+    #[test]
+    fn delete_clients(){
+        let status = remove_client_trees();
+        assert!(status);
+        assert_eq!(get_client_uids().len(),0);
 
-
+    }
     #[test]
     fn init_bash_test() {
         // uncomment delete file to persist this user

@@ -18,7 +18,7 @@ pub struct ServiceIdentity {
 impl ServiceIdentity {
     /// Used by the admin to create a new client with a sid and apikey index.
     pub fn new(name: &str) -> Self {
-        let root = database::get_root(database::SERVICE_TREE).unwrap();
+        let root = database::get_root(database::SERVICE).unwrap();
         let sid = format!("s5sid-{}", Uuid::new_v4());
         let main_tree = database::get_tree(root.clone(), &sid).unwrap();
 
@@ -58,7 +58,7 @@ impl ServiceIdentity {
     }
     /// Get a ServiceIdentity structure using uid
     pub fn read(sid: &str) -> Option<Self> {
-        let root = database::get_root(database::SERVICE_TREE).unwrap();
+        let root = database::get_root(database::SERVICE).unwrap();
         let main_tree = database::get_tree(root, sid).unwrap();
 
         // if this tree exists return it
@@ -79,7 +79,7 @@ impl ServiceIdentity {
         }
     }
     pub async fn update_shared_secert(&self, shared_secret: &str) -> Self {
-        let root = database::get_root(database::SERVICE_TREE).unwrap();
+        let root = database::get_root(database::SERVICE).unwrap();
         let main_tree = database::get_tree(root, &self.clone().sid).unwrap();
     
         main_tree.insert(b"shared_secret", shared_secret.as_bytes()).unwrap();
@@ -92,7 +92,7 @@ impl ServiceIdentity {
  
  
     pub fn delete(&self)->bool{
-        let root = database::get_root(database::SERVICE_TREE).unwrap();
+        let root = database::get_root(database::SERVICE).unwrap();
         let main_tree = database::get_tree(root.clone(), &self.sid).unwrap();
         let name_tree = database::get_tree(root.clone(), &self.name.clone()).unwrap();
 
@@ -111,7 +111,7 @@ impl ServiceIdentity {
 
 /// All methods use sid as the primary index. Incase only an name is presented, the sod index can be retrieved with this function.
 fn get_sid_from(name: &str) -> Option<String> {
-    let root = database::get_root(database::SERVICE_TREE).unwrap();
+    let root = database::get_root(database::SERVICE).unwrap();
     let name_tree = database::get_tree(root.clone(), name).unwrap();
 
     if name_tree.contains_key(b"sid").unwrap() {

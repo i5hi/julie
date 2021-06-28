@@ -15,7 +15,7 @@ cargo test -- --test-threads 1
 ```
 
 ### integration
-To test the server with the bash client, first create a new user with an apikey
+To test the daemon with the bash client, first create a new client with an apikeyd
 
 ```bash
 # Uncomment the last two asserts that delete the clinet and service db entries

@@ -68,7 +68,7 @@ mod tests {
     #[test]
     fn verify_jwt_expired(){
         let key = String::from("superseecret");
-        let token = String::from("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzYXRzYmFuay5pbyIsImF1ZCI6ImNsaWVudC5zYXRzYmFuay5pbyIsImV4cCI6MTYxNzk0OTk2MCwidWlkIjoiczVpZFZpc2hhbE1lbm9uIn0.0dbAs07HYbMPBRCwVq5MXlHHYYR4jvppe0KEBlSlIyk");
+        let token = String::from("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJqdWxpZSIsImF1ZCI6InNhdHNiYW5rLmlvIiwiZXhwIjoxNjI0ODEyNzM5LCJ1aWQiOiJzNWlkVmlzaGFsTWVub24iLCJsZXZlbCI6Ilplcm8ifQ.S_AlAQmDQ_OGZOjObLoYnn292wTt22_05ltxQlBC2og");
         // println!("DECODED: {}",verify(token, key).unwrap());
 
         match verify(token, key){
