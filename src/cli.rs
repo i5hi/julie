@@ -1,5 +1,4 @@
 use clap::{App, AppSettings, Arg};
-use reqwest::blocking;
 
 mod auth;
 mod lib;
@@ -7,7 +6,7 @@ mod lib;
 fn main() {
     let matches = App::new("jc")
         .about("A cli tool to interact with julie's database")
-        .version("0.0.3")
+        .version("0.0.8")
         .author("Stackmate.Network")
         .subcommand(
             App::new("info")
@@ -121,7 +120,7 @@ fn main() {
             }
         }
        
-        ("",None) => println!("No subcommand was used"), 
+        ("",None) => println!("No subcommand was used. try `jc help`."), 
         _ => unreachable!(),
     }
 

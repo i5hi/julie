@@ -1,6 +1,6 @@
 [package]
 name = "julie"
-version = "0.0.6"
+version = "0.0.8"
 authors = ["Vishal Menon <vishalmenon.92@gmail.com>"]
 edition = "2018"
 description = "Multi-factor authentication server; inspired by Kerberos."

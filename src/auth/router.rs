@@ -1,4 +1,4 @@
-use crate::auth::handler;
+use crate::auth::dto;
 use crate::lib::error;
 use tracing::{instrument};
 use warp::{self, Filter};
@@ -21,7 +21,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and(warp::header::<String>("x-sats-api-key"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
-        .and_then(handler::handle_put_basic)
+        .and_then(dto::handle_put_basic)
         .with(warp::trace::named("auth-put-basic"));
         
     let put_pubkey = warp::path("auth")
@@ -31,7 +31,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and(warp::header::<String>("authorization"))
         // .and(warp::body::content_length_limit(1024 * 64))
         .and(warp::body::json())
-        .and_then(handler::handle_put_pubkey)
+        .and_then(dto::handle_put_pubkey)
         .with(warp::trace::named("auth-put-pubkey"));
 
     // let get_totp = auth_root.clone()
@@ -39,10 +39,10 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
     //     .and(warp::path("key"))
     //     .and(warp::get())
     //     .and(warp::header::<String>("x-sats-api-key"))
-    //     .map(handler::filter_apikey)
+    //     .map(dto::filter_apikey)
     //     .and(warp::header::<String>("Authorization"))
-    //     .map(handler::filter_basic_auth)
-    //     .and_then(handler::handle_get_totp_key)
+    //     .map(dto::filter_basic_auth)
+    //     .and_then(dto::handle_get_totp_key)
     //     .recover(error::handle_rejection)
     //     .with(warp::trace::named("auth-get-totp"));
 
@@ -50,12 +50,12 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
     //     .and(warp::path("totp"))
     //     .and(warp::post())
     //     .and(warp::header::<String>("x-sats-api-key"))
-    //     .map(handler::filter_apikey)
+    //     .map(dto::filter_apikey)
     //     .and(warp::header::<String>("Authorization"))
-    //     .map(handler::filter_basic_auth)
+    //     .map(dto::filter_basic_auth)
     //     .and(warp::body::content_length_limit(1024 * 16))
     //     .and(warp::body::json())
-    //     .and_then(handler::handle_post_totp)
+    //     .and_then(dto::handle_post_totp)
     //     .recover(error::handle_rejection)
     //     .with(warp::trace::named("auth-post-totp"));
 
@@ -66,8 +66,8 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and(warp::header::<String>("Authorization"))
         .and(warp::header::<String>("x-sats-client-signature"))
         .and(warp::header::<u64>("x-sats-timestamp"))
-        .and(warp::query::<handler::ServiceQuery>())
-        .and_then(handler::handle_get_token)
+        .and(warp::query::<dto::ServiceQuery>())
+        .and_then(dto::handle_get_token)
         .with(warp::trace::named("auth-get-token"));
 
 
