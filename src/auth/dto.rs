@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use std::str;
 
-use tracing::instrument;
+// use tracing::instrument;
 
 use crate::auth::client::{AuthLevel, ClientAuth};
 use crate::auth::core;

@@ -132,9 +132,8 @@ fn get_sid_from(name: &str) -> Option<String> {
 
 }
 
-
 /// Retrives all tree indexes in a db
-pub fn get_sid_indexes() -> Vec<String>{
+pub fn _get_sid_indexes() -> Vec<String>{
     let root = database::get_root(database::SERVICE).unwrap();
     let mut uids: Vec<String> = [].to_vec();
     for key in root.tree_names().iter() {
@@ -164,7 +163,7 @@ pub fn get_name_indexes() -> Vec<String>{
     names
 }
 /// Removes all trees in a db. Careful with that axe, Eugene.
-pub fn remove_service_trees() -> bool {
+pub fn _remove_service_trees() -> bool {
     let root = database::get_root(database::SERVICE).unwrap();
     for key in root.tree_names().iter() {
         let index = str::from_utf8(key).unwrap();
@@ -194,8 +193,8 @@ mod tests {
         // client asks admin to initialize a user account
         let service_id = ServiceIdentity::new("satoshipay");
         // admin gives client this new client_auth with an apikey
-        let indexes = get_sid_indexes();
-        println!("{:#?}",get_sid_indexes());
+        let indexes = _get_sid_indexes();
+        println!("{:#?}",_get_sid_indexes());
         println!("{:#?}",get_name_indexes());
 
         
@@ -214,9 +213,9 @@ mod tests {
         /// This must always be ignored on master or it will delete all your stuff
         #[test] #[ignore]
         fn delete_all_services(){
-            let status = remove_service_trees();
+            let status = _remove_service_trees();
             assert!(status);
-            assert_eq!(get_sid_indexes().len(),0);
+            assert_eq!(_get_sid_indexes().len(),0);
     
         }
 

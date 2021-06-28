@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use clap::{App, AppSettings, Arg};
 
 mod auth;
