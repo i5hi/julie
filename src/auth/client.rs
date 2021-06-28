@@ -163,12 +163,10 @@ impl ClientAuth {
         main_tree.clear().unwrap();
         main_tree.flush().unwrap();
         let drop_status = root.drop_tree(&main_tree.name()).unwrap();
-        println!("dropped main tree: {:?}",drop_status.clone());
         let apikey_tree = database::get_tree(root.clone(), &self.clone().apikey).unwrap();
         apikey_tree.clear().unwrap();
         apikey_tree.flush().unwrap();
         let drop_status = root.drop_tree(&apikey_tree.name()).unwrap();
-        println!("dropped apikey tree: {:?}",drop_status.clone());
 
         root.flush().unwrap();
 
@@ -192,7 +190,7 @@ fn get_uid_from(apikey: &str) -> Option<String> {
 }
 
 /// Retrives all tree indexes in a db
-pub fn get_client_uids() -> Vec<String>{
+pub fn get_uid_indexes() -> Vec<String>{
     let root = database::get_root(database::CLIENT).unwrap();
     let mut uids: Vec<String> = [].to_vec();
     for key in root.tree_names().iter() {
@@ -246,7 +244,7 @@ mod tests {
         // client asks admin to initialize a user account
         let client_auth = ClientAuth::new();
         // admin gives client this new client_auth with an apikey
-        let indexes = get_client_uids();
+        let indexes = get_uid_indexes();
         println!("#Clients: {}", indexes.len());
         println!("{:?}", indexes);
 
@@ -303,7 +301,7 @@ mod tests {
     fn delete_clients(){
         let status = remove_client_trees();
         assert!(status);
-        assert_eq!(get_client_uids().len(),0);
+        assert_eq!(get_uid_indexes().len(),0);
 
     }
     #[test]

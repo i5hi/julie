@@ -1,4 +1,6 @@
 use clap::{App, AppSettings, Arg};
+mod auth;
+mod lib;
 
 fn main() {
     let matches = App::new("jcli")
@@ -17,17 +19,16 @@ fn main() {
                 .display_order(1)
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
-                    App::new("register") // Subcommands can have their own subcommands,
-                        // which in turn have their own subcommands
-                        .about("Registers a new client")
-                        .arg(
-                            Arg::with_name("repo")
-                                .required(true)
-                                .help("The remote repo to push things to"),
-                        ),
+                    App::new("register").about("Registers a new client")
                 )
-                .subcommand(App::new("delete").about("Deletes and existing client"))
-                .subcommand(App::new("list").about("Lists all existing clients")),
+                .subcommand(
+                    App::new("delete").about("Deletes and existing client")
+                    .arg(
+                        Arg::with_name("uid")
+                        .required(true)
+                        .help("The uid of the client to delete."),
+                ))
+                .subcommand(App::new("list").about("Lists all existing client uids")),
 
         )
         .subcommand(
@@ -36,14 +37,7 @@ fn main() {
                 .display_order(1)
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
-                    App::new("register") // Subcommands can have their own subcommands,
-                        // which in turn have their own subcommands
-                        .about("Registers a new service")
-                        .arg(
-                            Arg::with_name("repo")
-                                .required(true)
-                                .help("The remote repo to push things to"),
-                        ),
+                    App::new("register").about("Registers a new service")
                 )
                 .subcommand(App::new("delete").about("Deletes and existing service"))
                 .subcommand(App::new("list").about("Lists all existing services")),
@@ -54,19 +48,29 @@ fn main() {
 
 
     match matches.subcommand() {
-        ("info", Some(clone_matches)) => {
-            println!("Asked for info. Got none right now :(");
+        ("info", Some(_)) => {
+            let clients = auth::client::get_uid_indexes();
+            println!("{:#?}",clients);
         }
         ("client", Some(push_matches)) => {
             match push_matches.subcommand() {
-                ("register", Some(remote_matches)) => {
-                    println!("'jcli client register' was called");
+                ("register", Some(_)) => {
+                    let client = auth::client::ClientAuth::new();
+                    println!("{:#?}",client);
                 }
                 ("list", Some(_)) => {
-                    println!("'jcli client list' was called");
+                    let clients = auth::client::get_uid_indexes();
+                    println!("{:#?}",clients);
                 }
-                ("delete", Some(_)) => {
-                    println!("'jcli client delete' was called");
+                ("delete", Some(args)) => {
+                    match auth::client::ClientAuth::read(&args.value_of("uid").unwrap()){
+                        Some(client)=>{
+                            let status = client.delete();
+                            println!("{:#?}",status);
+                        }
+                        None=>println!("Provided UID is not registered.")
+                    };
+                    
                 }
                 _ => unreachable!(),
             }
