@@ -19,11 +19,13 @@ To test the daemon with the bash client, first create a new client with the cli
 
 ```bash
 # Uncomment the last two asserts that delete the clinet and service db entries
-cargo run --bin cli client register
+cargo run --bin jc client register
+cargo run --bin jc service register satoshiplay
+
 # Add the api key to the test client file
 nano test/auth_signer.bash
 # Start the daemon
-cargo run --bin daemon
+cargo run --bin jd
 # Run the integration test
 bash auth_signer.bash
 # NOTE: THIS TEST MUTATES YOUR STATE. 
@@ -39,6 +41,16 @@ strip jd
 strip jc
 cp jd /usr/bin
 cp jc /usr/bin
+
+# start the server
+jd
+# use the client
+jc info
+jc client list
+jc server register cyphernode
+jc server list
+
+
 ```
 ## goals
 
@@ -70,7 +82,7 @@ Contains all core modules and tools required by the `auth` module. Can be indepe
 
     - `core`: Defines all the core logic for the auth module
 
-    - `handler`: Provides http wrappers for core.
+    - `dto`: Provides http wrappers for core. Abbreviates to Data-Transfer-Object. Converting IO from Http to Native.
 
     - `router`: Declares the http api exposed by the `auth` module.
 
@@ -85,5 +97,5 @@ Our primary focus is on creating correct `lib` tools for all the provided authen
 
 We want to create a correct implementation of our chosen http server library (warp) and create an async friendly http service. `async` in rust is still new to us and we are certainly not using it as effectively as we could. 
 
-3. database-interface: finally, it would be nice to decouple `sled` from the storage model.
+3. database-interface: finally, it would be nice to decouple `sled` from the storage model and allow using either `SQL` or external storage like `Hasicorp Vault`.
 
