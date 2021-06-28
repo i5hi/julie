@@ -21,15 +21,25 @@ To test the daemon with the bash client, first create a new client with the cli
 # Uncomment the last two asserts that delete the clinet and service db entries
 cargo run --bin cli client register
 # Add the api key to the test client file
-nano test/auth.bash
+nano test/auth_signer.bash
 # Start the daemon
 cargo run --bin daemon
 # Run the integration test
-bash auth.bash
+bash auth_signer.bash
 # NOTE: THIS TEST MUTATES YOUR STATE. 
 # Investigate using the cli tool and clean up with the delete subcommands
 ```
 
+## build
+
+```bash
+cargo build --release
+cd target/release/
+strip jd
+strip jc
+cp jd /usr/bin
+cp jc /usr/bin
+```
 ## goals
 
 julie strives to be:

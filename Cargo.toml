@@ -1,16 +1,16 @@
 [package]
 name = "julie"
-version = "0.0.3"
+version = "0.0.6"
 authors = ["Vishal Menon <vishalmenon.92@gmail.com>"]
 edition = "2018"
 description = "Multi-factor authentication server; inspired by Kerberos."
 
 [[bin]]
-name = "daemon"
+name = "jd"
 path = "src/daemon.rs"
 
 [[bin]]
-name = "cli"
+name = "jc"
 path = "src/cli.rs"
 
 [dependencies]

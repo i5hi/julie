@@ -46,7 +46,7 @@ impl S5Error{
 impl warp::reject::Reject for S5ErrorKind {}
 
 #[instrument]
-pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Rejection> {
+pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
     let code;
     let message;
 
