@@ -1,7 +1,6 @@
 /// NOTE: 
 /// Every time you create a tree, you have to call drop on it if it is not used or else it leaves behind an empty index.
 
-use crate::lib::aes;
 use crate::lib::database;
 
 use serde::{Deserialize, Serialize};
@@ -20,7 +19,7 @@ pub struct ServiceIdentity {
 
 impl ServiceIdentity {
     /// Used by the admin to create a new client with a sid and apikey index.
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, shared_secret: &str) -> Self {
         let root = database::get_root(database::SERVICE).unwrap();
         let sid = format!("s5sid-{}", Uuid::new_v4());
         let main_tree = database::get_tree(root.clone(), &sid).unwrap();
@@ -31,7 +30,6 @@ impl ServiceIdentity {
         name_tree.insert(b"sid", sid.as_bytes()).unwrap();
         name_tree.insert(b"name", name.as_bytes()).unwrap();
 
-        let shared_secret = aes::keygen(aes::Encoding::Hex);
 
         // creating main tree
         main_tree.insert(b"sid", sid.as_bytes()).unwrap();
@@ -187,11 +185,14 @@ pub fn _remove_service_trees() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lib::aes;
 
     #[test]
     fn service_composite() {
         // client asks admin to initialize a user account
-        let service_id = ServiceIdentity::new("satoshipay");
+        let shared_secret = aes::keygen(aes::Encoding::Hex);
+
+        let service_id = ServiceIdentity::new("satoshipay",&shared_secret);
         // admin gives client this new client_auth with an apikey
         let indexes = _get_sid_indexes();
         println!("{:#?}",_get_sid_indexes());

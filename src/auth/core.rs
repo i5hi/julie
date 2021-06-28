@@ -145,7 +145,9 @@ mod tests {
         assert!(verify_signature(ready_client.clone(), message, &signature));
 
         let service_name = "satoshipay";
-        let service = ServiceIdentity::new(service_name);
+        let shared_secret = keygen(Encoding::Hex);
+
+        let service = ServiceIdentity::new(service_name,&shared_secret);
 
         let token = issue_token(ready_client.clone(), service_name.clone()).unwrap();
         println!("Bearer {:#?}",token.clone());

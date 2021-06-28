@@ -1,4 +1,6 @@
 // use std::iter::repeat;
+use std::str::FromStr;
+
 use openssl::symm;
 use std::str;
 use rand::prelude::*;
@@ -10,6 +12,20 @@ pub enum Encoding {
     Base32,
     Hex
 }
+impl FromStr for Encoding{
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Encoding,Self::Err>{
+        let level = match s {
+            "hex"=>Encoding::Hex,
+            "base32"=>Encoding::Base32,
+            "base64"=>Encoding::Base64,
+            &_=>return Err(())
+        };
+        Ok(level)
+    }
+}
+
 // use rand_seeder::{Seeder};
 // use rand_pcg::Pcg64;
 

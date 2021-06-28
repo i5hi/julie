@@ -1,8 +1,11 @@
 #![allow(dead_code)]
 use clap::{App, AppSettings, Arg};
+use std::str::FromStr;
 
 mod auth;
 mod lib;
+
+use crate::lib::aes;
 
 fn main() {
     let matches = App::new("jc")
@@ -51,9 +54,29 @@ fn main() {
                         Arg::with_name("name")
                         .required(true)
                         .help("The name of the client to delete."),
-                ))
+                    )
+                    .arg(
+                        Arg::with_name("key")
+                        .required(true)
+                        .help("Shared key to use to sign tokens for this service"),
+                    )
+                )
                 .subcommand(App::new("list").about("Lists all existing service sids")),
 
+        )
+        .subcommand(
+            App::new("util")
+                .about("Additional Utilities")
+                .display_order(1)
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(
+                    App::new("random").about("Create a random key")
+                    .arg(
+                        Arg::with_name("encoding")
+                        .required(false)
+                        .help("'hex' (default), 'base32' or 'base64'"),
+                    )
+                )
         )
         .get_matches();
   
@@ -100,7 +123,7 @@ fn main() {
         ("service", Some(push_matches)) => {
             match push_matches.subcommand() {
                     ("register", Some(args)) => {
-                        let service = auth::service::ServiceIdentity::new(&args.value_of("name").unwrap());
+                        let service = auth::service::ServiceIdentity::new(&args.value_of("name").unwrap(),&args.value_of("key").unwrap());
                         println!("{:#?}",service);
                     }
                     ("list", Some(_)) => {
@@ -116,6 +139,24 @@ fn main() {
                             None=>println!("Provided name is not registered.")
                         };
                         
+                    }
+                _ => unreachable!(),
+            }
+        }
+        ("util", Some(push_matches)) => {
+            match push_matches.subcommand() {
+                    ("random", Some(args)) => {
+                        let encoding_str = match args.value_of("encoding"){
+                            Some(string)=>string,
+                            None=>"hex"
+                        };
+
+                        let encoding = match aes::Encoding::from_str(encoding_str){
+                            Ok(encoding)=>{encoding},
+                            Err(e)=>{aes::Encoding::Hex}
+                        };
+                        let random = aes::keygen(encoding);
+                        println!("{:#?}",random);
                     }
                 _ => unreachable!(),
             }
