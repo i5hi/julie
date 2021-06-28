@@ -99,3 +99,17 @@ We want to create a correct implementation of our chosen http server library (wa
 
 3. database-interface: finally, it would be nice to decouple `sled` from the storage model and allow using either `SQL` or external storage like `Hasicorp Vault`.
 
+
+### known bugs
+
+- Rejections: 
+Correctly handled errors currently get logged as ERROR in tracing becuase of how we handle warp::Reply and warp::Response in the dto. 
+
+Also, handle_rejection() is now chained to the end of all the routes. 
+This error is suppressed if it is chained to each route individually but this brings up another error where if a request for route #3 is made, route#1's handle_rejection completes that request with NotFound. 
+
+For now, this is okay, its just that it confuses, tracing, the actual request gets handled correctly. 
+
+This is warp's main drawback. The filter chain means that requests pass through each route by order so request to route #5 always goes through the first 4 routes. This doesnt scale well. 
+
+This makes me consider tower. 
