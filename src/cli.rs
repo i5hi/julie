@@ -19,7 +19,7 @@ usage: pikachu [SUBCOMMAND] [ARGS]
  */
 fn main() {
     let matches = App::new("\x1b[0;92mjc\x1b[0m")
-        .about("\x1b[0;94mJulie cli tools\x1b[0m")
+        .about("\x1b[0;94mJulie admin tools.\x1b[0m")
         .version("\x1b[0;1m0.0.9\x1b[0m")
         .author("Stackmate.Network")
         .subcommand(
