@@ -92,13 +92,13 @@ Contains all core modules and tools required by the `auth` module. Can be indepe
 
 1. correct-tooling: 
 
-Our primary focus is on creating correct `lib` tools for all the provided authentication methods. This is the core of the project and also the easiest way to contribute as they are independently testable units. All lib units must return  `Result` types and properly handle errors and not panic.
+Our primary focus is on creating correct `lib` tools for all the provided authentication methods. This is the core of the project and also the easiest way to contribute as they are independently testable units.
 
 2. async-server: 
 
-We want to create a correct implementation of our chosen http server library (warp) and create an async friendly http service. `async` in rust is still new to us and we are certainly not using it as effectively as we could. 
+We want to create a correct implementation of our chosen http server library (warp). async in rust is still new to us and we are certainly not using it as effectively as we could. Currently the `lib` and `auth/core` of the julie is not async, only `handlers` and `daemon.rs`.  
 
-3. database-interface: finally, it would be nice to decouple `sled` from the storage model and allow using either `SQL` or external storage like `Hasicorp Vault`.
+3. database-interface: finally, it would be nice to decouple `sled` from the storage model and allow using either `SQL` or external storage like `Hasicorp Vault`. The `auth/core` should essentially take a data store interface as input and be able to update and verify against any datastore that implements the storage interface.
 
 
 ### known bugs
@@ -109,6 +109,8 @@ The new() constructors for data structures currently overwrite existing entries.
 
 This should instead check for an existing entry and return a Conflict. Updating should only be allowed via the update method.
 
+This is temporarily fixed by using read before running new(). new() is currenly only used by `jc`.
+ 
 - Server Rejections: 
 
 Correctly handled errors currently get logged as ERROR in tracing becuase of how we handle warp::Reply and warp::Response in the dto. 

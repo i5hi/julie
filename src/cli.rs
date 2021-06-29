@@ -24,7 +24,7 @@ fn main() {
         .author("Stackmate.Network")
         .subcommand(
             App::new("info")
-                .about("Provides live stats on julie.")
+                .about("Provides live stats on julie daemon.")
                 .display_order(0)
         )
         .subcommand(
@@ -69,6 +69,19 @@ fn main() {
                         Arg::with_name("name")
                         .required(true)
                         .help("The name of the client to delete."),
+                    )
+                )
+                .subcommand(
+                    App::new("update").about("Updates an existing service shared secret key")
+                    .arg(
+                        Arg::with_name("name")
+                        .required(true)
+                        .help("The name of the service to update."),
+                    )
+                    .arg(
+                        Arg::with_name("key")
+                        .required(true)
+                        .help("New key to update."),
                     )
                 )
                 .subcommand(App::new("list").about("Lists all existing service sids")),
@@ -155,6 +168,13 @@ fn main() {
                             }
                             None=>println!("Provided name is not registered.")
                         };
+                        
+                    }
+                    ("update", Some(args)) => {
+                        match auth::service::ServiceIdentity::init(&args.value_of("name").unwrap()){
+                            Some(service)=>println!("{:#?}",service.update_shared_secert(&args.value_of("key").unwrap())),
+                            None=>println!("Provided name is not registered.")
+                        };                      
                         
                     }
                 _ => unreachable!(),

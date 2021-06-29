@@ -86,7 +86,7 @@ impl ServiceIdentity {
             None
         }
     }
-    pub async fn update_shared_secert(&self, shared_secret: &str) -> Self {
+    pub fn update_shared_secert(&self, shared_secret: &str) -> Self {
         let root = database::get_root(database::SERVICE).unwrap();
         let main_tree = database::get_tree(root, &self.clone().sid).unwrap();
     
