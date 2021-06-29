@@ -1,0 +1,10 @@
+Easiest way to contribute is to add utility functions in src/lib that wrap up common tasks into String interfaces.
+
+All new functions must have unit tests. 
+
+If you are writing a collection of functions to be used together, create a `composite` test that simulates a use-case and tests multiple functions.
+
+Write tests that can be run independently. 
+
+If your test mutates global state, make sure to create helper functions that you can run to clean up any artifacts.
+
