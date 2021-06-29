@@ -46,8 +46,9 @@ cp jc /usr/bin
 jd
 # use the client
 jc info
+jc util random
 jc client list
-jc server register cyphernode
+jc server register cyphernode 5608f6ad1e6b71514ee3c465061f4a471f59a76734796e5d78c7191cedd30127
 jc server list
 
 
