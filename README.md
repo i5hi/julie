@@ -20,7 +20,7 @@ To test the daemon with the bash client, first create a new client with the cli
 ```bash
 # Uncomment the last two asserts that delete the clinet and service db entries
 cargo run --bin jc client register
-cargo run --bin jc service register satoshiplay
+cargo run --bin jc service register satoshiplay 122ded04a4818942ca52f8844e86df65fe5db3bb4b66bb45a4b02aea6e1bdef5
 
 # Add the api key to the test client file
 nano test/auth_signer.bash
