@@ -6,11 +6,21 @@ mod auth;
 mod lib;
 
 use crate::lib::aes;
+/**
+ * 
+ * name: "\x1b[0;1mpikachu\x1b[0m"
+version: "\x1b[0;94m0.4.6\x1b[0m"
+author: dev@stackmate.net
+about: "\x1b[0;94msatsbank.io client; with sovereign bitcoin tools\x1b[0m"
+before_help: "\x1b[0;92m*******************************************vires***************************************************\x1b[0m"
+after_help:  "\x1b[0;92m****************************************in.numeris**************************************************\x1b[0m"
+usage: pikachu [SUBCOMMAND] [ARGS]
 
+ */
 fn main() {
-    let matches = App::new("jc")
-        .about("A cli tool to interact with julie's database")
-        .version("0.0.9")
+    let matches = App::new("\x1b[0;92mjc\x1b[0m")
+        .about("\x1b[0;94mJulie cli tools\x1b[0m")
+        .version("\x1b[0;1m0.0.9\x1b[0m")
         .author("Stackmate.Network")
         .subcommand(
             App::new("info")
@@ -66,7 +76,7 @@ fn main() {
         )
         .subcommand(
             App::new("util")
-                .about("Additional Utilities")
+                .about("Toys")
                 .display_order(1)
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
@@ -78,6 +88,7 @@ fn main() {
                     )
                 )
         )
+
         .get_matches();
   
 
@@ -119,7 +130,6 @@ fn main() {
                 _ => unreachable!(),
             }
         }
-       
         ("service", Some(push_matches)) => {
             match push_matches.subcommand() {
                     ("register", Some(args)) => {
@@ -161,7 +171,6 @@ fn main() {
                 _ => unreachable!(),
             }
         }
-       
         ("",None) => println!("No subcommand was used. try `jc help`."), 
         _ => unreachable!(),
     }

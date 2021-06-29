@@ -13,7 +13,8 @@ async fn main() {
     .with_span_events(FmtSpan::CLOSE)
     .init();
     
-    tracing::info!(".[|Julie Authentication|].");
+    tracing::info!(".[|julie mfa daemon|].");
+    lib::printer::banner();
     warp::serve(auth::router::build()).run(([127, 0, 0, 1], 3030)).await
 }
 

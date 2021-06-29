@@ -19,7 +19,7 @@ use std::str;
 
 use sled::{Db, Tree};
 
-const STORAGE_ROOT: &str = ".satsbank"; // Database
+pub const STORAGE_ROOT: &str = ".julie"; // Database
 pub const CLIENT: &str = "client"; // Collection
 pub const SERVICE: &str = "service";
 
