@@ -10,7 +10,7 @@ use crate::lib::aes;
 fn main() {
     let matches = App::new("jc")
         .about("A cli tool to interact with julie's database")
-        .version("0.0.8")
+        .version("0.0.9")
         .author("Stackmate.Network")
         .subcommand(
             App::new("info")

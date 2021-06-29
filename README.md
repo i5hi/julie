@@ -107,7 +107,7 @@ We want to create a correct implementation of our chosen http server library (wa
 
 The new() constructors for data structures currently overwrite existing entries. 
 
-This should instead check for an existing entry and return a Conflict. Updating should use be allowed via the update method.
+This should instead check for an existing entry and return a Conflict. Updating should only be allowed via the update method.
 
 - Server Rejections: 
 
