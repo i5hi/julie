@@ -14,7 +14,8 @@ async fn main() {
     .init();
     
     tracing::info!(".[|julie mfa daemon|].");
-    lib::printer::banner();
+    lib::banner::print();
+    
     warp::serve(auth::router::build()).run(([127, 0, 0, 1], 3030)).await
 }
 

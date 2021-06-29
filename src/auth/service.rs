@@ -20,29 +20,33 @@ pub struct ServiceIdentity {
 impl ServiceIdentity {
     /// Used by the admin to create a new client with a sid and apikey index.
     pub fn new(name: &str, shared_secret: &str) -> Self {
+   
         let root = database::get_root(database::SERVICE).unwrap();
         let sid = format!("s5sid-{}", Uuid::new_v4());
-        let main_tree = database::get_tree(root.clone(), &sid).unwrap();
-
+        let main_tree = database::get_tree(root.clone(), &sid.clone()).unwrap();
         let name_tree = database::get_tree(root.clone(), &name.clone()).unwrap();
 
-        // creating an alternative apikey index tree
-        name_tree.insert(b"sid", sid.as_bytes()).unwrap();
+        // creating an alternative name index tree
+        println!("HERE");
+        name_tree.insert(b"sid", sid.clone().as_bytes()).unwrap();
         name_tree.insert(b"name", name.as_bytes()).unwrap();
 
 
         // creating main tree
-        main_tree.insert(b"sid", sid.as_bytes()).unwrap();
+        main_tree.insert(b"sid", sid.clone().as_bytes()).unwrap();
         main_tree.insert(b"name", name.as_bytes()).unwrap();
         main_tree.insert(b"shared_secret", shared_secret.as_bytes()).unwrap();
-
+        
+        name_tree.flush().unwrap();
         main_tree.flush().unwrap();
+        root.flush().unwrap();
 
         ServiceIdentity {
             sid: sid.to_string(),
             name: name.to_string(),
             shared_secret: shared_secret.to_string(),
         }
+   
     }
     /// Get ServiceIdentity structure using name
     pub fn init(name: &str) -> Option<Self>{
@@ -64,6 +68,7 @@ impl ServiceIdentity {
 
         // if this tree exists return it
         if main_tree.contains_key(b"name").unwrap() {
+            root.flush().unwrap();
             Some(ServiceIdentity {
                 sid: str::from_utf8(&main_tree.get(b"sid").unwrap().unwrap().to_vec())
                     .unwrap()
@@ -77,6 +82,7 @@ impl ServiceIdentity {
             })
         } else {
             root.drop_tree(&main_tree.name()).unwrap();
+            root.flush().unwrap();
             None
         }
     }

@@ -5,4 +5,4 @@ pub mod rsa;
 pub mod hash;
 pub mod jwt;
 pub mod totp;
-pub mod printer;
+pub mod banner;

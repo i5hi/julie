@@ -133,8 +133,15 @@ fn main() {
         ("service", Some(push_matches)) => {
             match push_matches.subcommand() {
                     ("register", Some(args)) => {
-                        let service = auth::service::ServiceIdentity::new(&args.value_of("name").unwrap(),&args.value_of("key").unwrap());
+                        let service = match auth::service::ServiceIdentity::init(&args.value_of("name").unwrap()){
+                            Some(service)=>service,
+                            None=>{
+                                auth::service::ServiceIdentity::new(&args.value_of("name").unwrap(),&args.value_of("key").unwrap())
+                            }
+                        };
                         println!("{:#?}",service);
+
+                        
                     }
                     ("list", Some(_)) => {
                         let services = auth::service::get_name_indexes();

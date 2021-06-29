@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 mkdir -p ~/.julie
 cp $PWD/art/hound.ascii ~/.julie/banner.ascii
