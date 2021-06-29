@@ -39,8 +39,8 @@ pub async fn handle_put_basic(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     
     let client = filter_apikey(apikey)?;
-    let client = core::update_basic_auth(client, &auth_basic.username, &auth_basic.pass256);
-    Ok(warp::reply::json(&client))
+    let _client = core::update_basic_auth(client, &auth_basic.username, &auth_basic.pass256);
+    Ok(warp::reply::json(&auth_basic))
 }
 /// Handle a warp http request to register a public_key.
 pub async fn handle_put_pubkey(
@@ -50,8 +50,8 @@ pub async fn handle_put_pubkey(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic)?;
-    let client = core::update_public_key(client, &auth_pubkey.public_key);
-    Ok(warp::reply::json(&client))
+    let _client = core::update_public_key(client, &auth_pubkey.public_key);
+    Ok(warp::reply::json(&auth_pubkey))
 }
 /// Handle a warp http request to get a totp_key.
 pub async fn handle_get_totp_key(

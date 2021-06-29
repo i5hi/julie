@@ -7,7 +7,7 @@ CTJSON="Content-type: application/json"
 ACKJSON="Accept: application/json"
 ACKURL="Accept: application/x-www-form-urlencoded"
 
-APIKEY=b9483feec625392d1b2270e52e7212f966325b7ed7e938e5938cd1f652c6245
+APIKEY=fe19baf1fb422054ca6503d4fc783ec48fd3868f136466180d86c4d5514f081c
 
 function basic {
     local url="$HOST$AUTH/basic"

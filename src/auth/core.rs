@@ -12,14 +12,20 @@ use crate::lib::error::S5ErrorKind;
 use oath::{HashType};
 
 
-pub fn update_basic_auth(client: ClientAuth, username: &str, pass256: &str)->ClientAuth{
-    client.clone().update("username",username);
-    client.clone().update("pass256",&hash::sha256(pass256));
+pub fn update_basic_auth(client: ClientAuth, username: &str, password: &str)->ClientAuth{
+  
     let client = ClientAuth::read(&client.clone().uid).unwrap();
     match client.clone().level{
-        AuthLevel::ApiKey=>client.update("level",AuthLevel::Basic.as_str()),
-        _=>false,
+        AuthLevel::ApiKey=>{   
+            client.update("level",AuthLevel::Basic.as_str())
+        },
+        _=>{
+            
+            false
+        },
     };
+    client.update("username",username);
+    client.update("pass512",&hash::salted512(password,&client.salt));
     client
 
 }
@@ -63,10 +69,10 @@ pub fn verify_basic_auth(client: ClientAuth, basic_auth_encoded: String)->bool{
         .to_string();
     let parts = decoded_auth.split(":").collect::<Vec<&str>>();
     let username = parts[0];
-    let pass256 = hash::sha256(&parts[1]);
-
+    let pass512 = hash::salted512(&parts[1], &client.salt);
     
-    if &pass256 == &client.pass256 && username == &client.username {
+    
+    if &pass512 == &client.pass512 && username == &client.username {
          true
     } else {
         false
@@ -113,20 +119,20 @@ mod tests {
         let password = "secret";
         // user must hash password
         let p256 = sha256(password);
-        let pass256_expected =
+        let pass512_expected =
             "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b".to_string();
         
-        assert_eq!(p256.clone(), pass256_expected.clone());
+        assert_eq!(p256.clone(), pass512_expected.clone());
 
-        // user must encode uname:pass256 in base64
+        // user must encode uname:pass512 in base64
         let encoded = base64::encode(format!("{}:{}",username.clone(),p256.clone()).as_bytes());
         let encoded_expected = "dm1kOjJiYjgwZDUzN2IxZGEzZTM4YmQzMDM2MWFhODU1Njg2YmRlMGVhY2Q3MTYyZmVmNmEyNWZlOTdiZjUyN2EyNWI=";
 
         assert_eq!(encoded.clone(),encoded_expected.clone());
     
         // We store a hashed hash
-        // p256 submitted by the user will differ from pass256 in the registered_client
-        // this is because pass256 is the hashed version of the hashed password provided by the client. 
+        // p256 submitted by the user will differ from pass512 in the registered_client
+        // this is because pass512 is the hashed version of the hashed password provided by the client. 
         // use verify_basic_auth which considers this when checking. do not check manually!
 
         let registered_client = update_basic_auth(client_auth, username, &p256.clone());

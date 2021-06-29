@@ -1,4 +1,5 @@
 use crate::lib::aes;
+use crate::lib::hash;
 use crate::lib::database;
 
 use serde::{Deserialize, Serialize};
@@ -55,8 +56,9 @@ impl FromStr for AuthLevel{
 pub struct ClientAuth {
     pub uid: String, // index
     pub apikey: String,
+    pub salt: String,
     pub username: String,
-    pub pass256: String,
+    pub pass512: String,
     pub public_key: String,
     pub totp_key: String,
     pub level: AuthLevel,
@@ -73,6 +75,7 @@ impl ClientAuth {
         let apikey = aes::keygen(aes::Encoding::Hex);
         let apikey_tree = database::get_tree(root.clone(), &apikey.clone()).unwrap();
 
+        let salt = hash::create_salt();
         // creating an alternative apikey index tree
         apikey_tree.insert(b"uid", uid.as_bytes()).unwrap();
         apikey_tree.insert(b"api_key", uid.as_bytes()).unwrap();
@@ -81,7 +84,8 @@ impl ClientAuth {
         main_tree.insert(b"uid", uid.as_bytes()).unwrap();
         main_tree.insert(b"apikey", apikey.as_bytes()).unwrap();
         main_tree.insert(b"username", "none".as_bytes()).unwrap();
-        main_tree.insert(b"pass256", "none".as_bytes()).unwrap();
+        main_tree.insert(b"salt", salt.clone().as_bytes()).unwrap();
+        main_tree.insert(b"pass512", "none".as_bytes()).unwrap();
         main_tree.insert(b"public_key", "none".as_bytes()).unwrap();
         main_tree.insert(b"totp_key", "none".as_bytes()).unwrap();
         main_tree.insert(b"level", format!("{:#?}",AuthLevel::ApiKey).as_bytes()).unwrap();
@@ -94,7 +98,8 @@ impl ClientAuth {
             uid: uid.to_string(),
             apikey: apikey.to_string(),
             username: "none".to_string(),
-            pass256: "none".to_string(),
+            pass512: "none".to_string(),
+            salt: "*^_^*".to_string(),
             public_key: "none".to_string(),
             totp_key: "none".to_string(),
             level:AuthLevel::ApiKey
@@ -127,18 +132,13 @@ impl ClientAuth {
                 apikey: str::from_utf8(&main_tree.get(b"apikey").unwrap().unwrap().to_vec())
                     .unwrap()
                     .to_string(),
-                username: str::from_utf8(&main_tree.get(b"username").unwrap().unwrap().to_vec())
-                    .unwrap()
-                    .to_string(),
-                pass256: str::from_utf8(&main_tree.get(b"pass256").unwrap().unwrap().to_vec())
-                    .unwrap()
-                    .to_string(),
+                username: str::from_utf8(&main_tree.get(b"username").unwrap().unwrap().to_vec()).unwrap().to_string(),
+                pass512: str::from_utf8(&main_tree.get(b"pass512").unwrap().unwrap().to_vec()).unwrap().to_string(),
+                salt: str::from_utf8(&main_tree.get(b"salt").unwrap().unwrap().to_vec()).unwrap().to_string(),
                 public_key: str::from_utf8(&main_tree.get(b"public_key").unwrap().unwrap().to_vec())
                     .unwrap()
                     .to_string(),
-                totp_key:  str::from_utf8(&main_tree.get(b"totp_key").unwrap().unwrap().to_vec())
-                .unwrap()
-                .to_string(),
+                totp_key:  str::from_utf8(&main_tree.get(b"totp_key").unwrap().unwrap().to_vec()).unwrap().to_string(),
                 level: AuthLevel::from_str(str::from_utf8(&main_tree.get(b"level").unwrap().unwrap().to_vec()).unwrap()).unwrap(),
             })
         } else {
@@ -146,10 +146,10 @@ impl ClientAuth {
             None
         }
     }
+
     pub fn update(&self, key: &str, value: &str)->bool{
         let root = database::get_root(database::CLIENT).unwrap();
         let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
-
         main_tree.insert(key.as_bytes(), value.as_bytes()).unwrap();
         main_tree.flush().unwrap();
         root.flush().unwrap();
@@ -157,8 +157,6 @@ impl ClientAuth {
     }
     pub fn delete(&self)->bool{
         let root = database::get_root(database::CLIENT).unwrap();
-        // println!("{:?}", str::from_utf8(&main_tree.name()).unwrap());
-        // println!("{:?}", str::from_utf8(&apikey_tree.name()).unwrap());
         let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
         let apikey_tree = database::get_tree(root.clone(), &self.clone().apikey).unwrap();
 
@@ -300,7 +298,7 @@ mod tests {
     }
     // Careful with that axe, Eugene
     /// This must always be ignored on master or it will delete all your stuff    
-    #[test] 
+    #[test] #[ignore]
     fn delete_all_clients(){
         let status = remove_client_trees();
         assert!(status);
