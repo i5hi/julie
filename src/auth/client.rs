@@ -300,7 +300,7 @@ mod tests {
     }
     // Careful with that axe, Eugene
     /// This must always be ignored on master or it will delete all your stuff    
-    #[test] #[ignore]
+    #[test] 
     fn delete_all_clients(){
         let status = remove_client_trees();
         assert!(status);

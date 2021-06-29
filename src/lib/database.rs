@@ -2,16 +2,22 @@
  *
  * charizard's db is configured on the file system as follows:
  *
- * $HOME/.satsbank/$service/$index
+ * $HOME/.julie/$collection/$index
  *
- * $service is the name of the service requiring the db - relative to mongo this is the name of the collection
- * $index is the value in the service structure which is used as the index - relative to mongo this is the index(_id) to a document.
+ * $collection is the name of the model requiring the db - relative to mongo this is the name of the collection
+ * $index is the key in the model structure which is used as the index - relative to mongo this is the index(_id) to a document.
  *
- * This is an architectural choice that is made for a single service model.
  *  
- * The primary benefit of this model is ease of use  and implementation.
+ * The primary benefit of this model is ease of use and implementation.
  *
  * The primary limitation is single index per document
+ * 
+ * If you want to use more than one index, you will have to create an alternative index tree
+ *
+ * Also note if you ask sled to get_tree, if will create that index if it doesnt exist. 
+ * 
+ * For this reason all implementors of sled need to explicity drop() the tree if they were expecting a docuemnt and got None.
+ * 
  */
 use std::env;
 use std::str;
@@ -21,9 +27,9 @@ use sled::{Db, Tree};
 
 pub const STORAGE_ROOT: &str = ".julie"; // Database
 pub const CLIENT: &str = "client"; // Collection
-pub const SERVICE: &str = "service";
+pub const SERVICE: &str = "service"; // Collection
 
-/// Retrieves the primary data store @ $HOME/.satsbank. Database + Collection in mongo. 
+/// Retrieves the primary data store @ $HOME/.julie. Get (Database + Collection) in mongo. 
 pub fn get_root(db: &str) -> Result<Db, String> {
     let db_storage_path: String =
         format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, db).to_string();
@@ -33,7 +39,7 @@ pub fn get_root(db: &str) -> Result<Db, String> {
     }
 }
 
-/// Retrieves a specific tree from the root. Document.
+/// Retrieves a specific tree from the selected root db. Get Document.
 pub fn get_tree(root: Db, index: &str) -> Result<Tree, String> {
     match root.open_tree(index.clone().as_bytes()) {
         Ok(db) => Ok(db),
@@ -49,11 +55,11 @@ mod tests {
     // use std::env;
 
     #[test]
-    fn db_composite() {
+    fn sled_composite() {
         let index = "s5idsatswala9010";
         let root = get_root(CLIENT).unwrap();
         
-        let tree = get_tree(root, index.clone()).unwrap();
+        let tree = get_tree(root.clone(), index.clone()).unwrap();
 
         let status = tree.contains_key(b"uid");
         println!("{:#?}",status);
@@ -66,10 +72,17 @@ mod tests {
                 println!("Error: Found None");
             }
         }
-
-        // tree.insert(b"uid", index.as_bytes()).unwrap();
-
         tree.flush().unwrap();
+        root.drop_tree(&tree.name()).unwrap();
+        root.flush().unwrap();
+
+        
+        for key in root.clone().tree_names().iter() {
+
+            println!("Name: {:?}",str::from_utf8(&key).unwrap());
+           
+    
+        }
 
     }
 }
