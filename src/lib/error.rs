@@ -17,6 +17,8 @@ pub enum S5ErrorKind{
     BasicAuth,
     #[error("RSA Public Key Sucks!")]
     PublicKey,
+    #[error("No service named {0} registered.")]
+    BadServiceIdentity(String),
     #[error("Totp Sucks!")]
     BadTotp,
     #[error("Totp Key Established!")]
@@ -77,6 +79,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
             S5ErrorKind::PublicKey => {
                 code = StatusCode::BAD_REQUEST;
                 message = "Public Key Sucks!";
+            }
+            S5ErrorKind::BadServiceIdentity(_) => {
+                code = StatusCode::BAD_REQUEST;
+                message = "No such service registered.";
             }
             S5ErrorKind::BadTotp => {
                 code = StatusCode::UNAUTHORIZED;

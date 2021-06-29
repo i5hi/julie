@@ -4,6 +4,8 @@ use std::str;
 // use tracing::instrument;
 
 use crate::auth::client::{AuthLevel, ClientAuth};
+use crate::auth::service::{ServiceIdentity};
+
 use crate::auth::core;
 use crate::lib::error::S5ErrorKind;
 
@@ -85,11 +87,20 @@ pub async fn handle_get_token(
     let client = filter_basic_auth(client, encoded_basic);
     let client = filter_signature(client, signature, timestamp)?;
     
-    let token = AuthToken {
-        token: core::issue_token(client, &service.service).unwrap(),
-    };
+    match ServiceIdentity::init(&service.clone().service){
+        Some(_)=>{
+            let token = AuthToken {
+                token: core::issue_token(client, &service.service).unwrap(),
+            };
+        
+            Ok(warp::reply::json(&token))
+        },
+        None=>{
+            Err(warp::reject::custom(S5ErrorKind::BadServiceIdentity(service.clone().service)))
+        },
+    }
 
-    Ok(warp::reply::json(&token))
+
 }
 
 /// A warp filter for apikey auth
