@@ -5,18 +5,18 @@ services:
         container_name: ada
         restart: always
         ports:
-        - "25:587"
+            - "25:587"
         volumes:
-        - postfix-spool:/var/spool/postfix
-        - postfix-etc:/etc/postfix
-        - postfix-keys:/etc/opendkim/keys
+            - postfix-spool:/var/spool/postfix
+            - postfix-etc:/etc/postfix
+            - postfix-keys:/etc/opendkim/keys
         environment:
-            ALLOWED_SENDER_DOMAINS: "play.satswala.com"
-            POSTFIX_hostname: "play-satswala"
+            ALLOWED_SENDER_DOMAINS: "auth.stackmate.net"
+            POSTFIX_hostname: "stackmate"
             TZ: "Asia/Kolkata"
-            DKIM_SELECTOR: "play"
+            DKIM_SELECTOR: "auth"
         networks:
-        - stackmate-network
+            - stackmate-network
 
 volumes:
     postfix-spool:
