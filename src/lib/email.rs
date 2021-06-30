@@ -1,19 +1,27 @@
 extern crate lettre;
 
 use std::env;
-use std::fs::{File};
+use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
 use lettre::{Message, Transport, SmtpTransport};
+use lettre::message::{ MultiPart};
 
 const JULIE_EMAIL: &str = "admin@test.satswala.com";
 
 pub fn send(to: &str, alias: &str, message: &str)->bool{
 
+    // let part = SinglePart::html(MaybeString::from_str(message));
+        //String::from("Текст письма в уникоде")
     let message = Message::builder()
         .from(format!("Julie <{}>",JULIE_EMAIL).parse().unwrap())
         .to(format!("{} <{}>",alias,to).parse().unwrap())
         .subject("Woof Woof")
-        .body(message.to_string())
-        .unwrap();
+        .multipart(MultiPart::alternative_plain_html(
+            String::from("Hello, world! :)"),
+            String::from(message),
+        )).unwrap();
+
 
     let transport = SmtpTransport::unencrypted_localhost();
 
@@ -42,7 +50,9 @@ mod tests {
         let to = "vishalmenon.92@gmail.com";
         let alias = "vmd";
         let message = "https://test.satswala.com/julie?token=supermostsecrettokenforyoumyfriendlyboi";
-        assert!(send(to, alias, message))
+        assert!(send(to, alias, message));
+        let message = readHTML();
+        assert!(send(to, alias, &message))
     }
 
 }

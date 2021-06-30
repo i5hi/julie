@@ -18,3 +18,5 @@ pub fn print(){
         println!("🐺 No Banner Found at ~/.julie/banner.ascii");
     }
 }
+
+
