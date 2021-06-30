@@ -40,7 +40,7 @@ function pubkey {
 }
 
 function token {
-    local url="$HOST$AUTH/token?service=satoshiplay"
+    local url="$HOST$AUTH/token?service=cyphernode"
     local key_path="$HOME/test_bug.pem"
     local username=vmd
     local password=secret
@@ -55,7 +55,7 @@ function token {
     local HTS="x-sats-timestamp: $time"
     local HSIG="x-sats-client-signature: $signature"
  
-    curl -s -H "$HAPIKEY" -H "$HAUTH" -H "$HSIG" -H "$HTS" -X GET "$url"
+    curl -vv -s -H "$HAPIKEY" -H "$HAUTH" -H "$HSIG" -H "$HTS" -X GET "$url"
 
 
 }

@@ -229,15 +229,10 @@ pub fn remove_client_trees() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lib::hash::sha256;
+    use crate::lib::hash::{sha256,salted512};
     use std::fs::File;
     use std::io::prelude::*;
 
-    // macro_rules! wait {
-    //     ($e:expr) => {
-    //         tokio_test::block_on($e)
-    //     };
-    // }
 
     #[test]
     fn client_composite() {
@@ -266,7 +261,7 @@ mod tests {
     
         // println!("{:#?}",client_auth.clone());
         assert!(client_auth.clone().update("username",username));
-        assert!(client_auth.clone().update("pass256",&sha256(&p256)));
+        assert!(client_auth.clone().update("pass512",&salted512(&p256,&client_auth.clone().salt)));
         assert!(client_auth.clone().update("level",AuthLevel::Basic.as_str()));
 
         let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
@@ -305,23 +300,5 @@ mod tests {
         assert_eq!(get_uid_indexes().len(),0);
 
     }
-    #[test]
-    fn init_bash_test() {
-        // uncomment delete file to persist this user
-        // make sure you delete it afterwards. 
-        // rerunning the test will override the old apikey.txt 
-        // this will make iit a pain to dig out that apikey index from sled
-        // its okay though, will be a good exercise
-        let client_auth = ClientAuth::new();
-        assert!(client_auth.clone().delete());
-
-        println!("{:#?}", client_auth);
-        let mut _file = File::create("apikey").unwrap();
-        _file = File::open("apikey").unwrap();
-
-        let mut contents = client_auth.clone().apikey;
-        _file.read_to_string(&mut contents).unwrap();
-
-
-    }
+ 
 }

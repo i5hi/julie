@@ -8,6 +8,7 @@ use crate::auth::service::{ServiceIdentity};
 
 use crate::auth::core;
 use crate::lib::error::S5ErrorKind;
+use crate::lib::server;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AuthBasic {
@@ -42,7 +43,7 @@ pub async fn handle_put_basic(
     
     let client = filter_apikey(apikey)?;
     let _client = core::update_basic_auth(client, &auth_basic.username, &auth_basic.pass256);
-    Ok(warp::reply::json(&auth_basic))
+    Ok(server::handle_response(warp::reply::json(&auth_basic)).await)
 }
 /// Handle a warp http request to register a public_key.
 pub async fn handle_put_pubkey(
@@ -53,7 +54,7 @@ pub async fn handle_put_pubkey(
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic)?;
     let _client = core::update_public_key(client, &auth_pubkey.public_key);
-    Ok(warp::reply::json(&auth_pubkey))
+    Ok(server::handle_response(warp::reply::json(&auth_pubkey)).await)
 }
 /// Handle a warp http request to get a totp_key.
 pub async fn handle_get_totp_key(
@@ -61,7 +62,7 @@ pub async fn handle_get_totp_key(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let client = client?;
     let client = core::update_totp_key(client).unwrap();
-    Ok(warp::reply::json(&client))
+    Ok(server::handle_response(warp::reply::json(&client)).await)
 }
 /// Handle a warp http request to post an otp to establish a totp_key.
 pub async fn handle_post_totp(
@@ -73,7 +74,7 @@ pub async fn handle_post_totp(
         status: core::verify_totp(client.clone(), otp),
     };
 
-    Ok(warp::reply::json(&verify))
+    Ok(server::handle_response(warp::reply::json(&verify)).await)
 }
 /// Handle a warp http request to get a JWT token to a client for a given service
 pub async fn handle_get_token(
@@ -93,7 +94,7 @@ pub async fn handle_get_token(
                 token: core::issue_token(client, &service.service).unwrap(),
             };
         
-            Ok(warp::reply::json(&token))
+            Ok(server::handle_response(warp::reply::json(&token)).await)
         },
         None=>{
             Err(warp::reject::custom(S5ErrorKind::BadServiceIdentity(service.clone().service)))

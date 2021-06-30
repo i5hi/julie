@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
-mkdir -p ~/.julie
+mkdir -p ~/.julie/.keysls
 cp $PWD/art/hound.ascii ~/.julie/banner.ascii
+cp $PWD/config.json ~/.julie/config.json
 
 cargo build --release
 

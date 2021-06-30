@@ -2,6 +2,7 @@ use crate::auth::dto;
 use crate::lib::error;
 use tracing::{instrument};
 use warp::{self, Filter};
+use crate::lib::server;
 
 /// Build a warp http router to serve all auth service apis.
 #[instrument]
@@ -75,7 +76,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .or(put_basic)
         .or(put_pubkey)
         .or(get_token)
-        .recover(error::handle_rejection)
+        .recover(server::handle_rejection)
         .with(warp::trace::request());
 
     auth_routes
