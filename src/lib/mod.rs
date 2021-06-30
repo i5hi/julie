@@ -8,3 +8,4 @@ pub mod totp;
 pub mod banner;
 pub mod server;
 pub mod config;
+pub mod email;
