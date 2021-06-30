@@ -7,18 +7,18 @@ use std::io::prelude::*;
 use lettre::{Message, Transport, SmtpTransport};
 use lettre::message::{ MultiPart};
 
+use crate::lib::database::STORAGE_ROOT;
+
 const JULIE_EMAIL: &str = "admin@test.satswala.com";
 
 pub fn send(to: &str, alias: &str, message: &str)->bool{
 
-    // let part = SinglePart::html(MaybeString::from_str(message));
-        //String::from("Текст письма в уникоде")
     let message = Message::builder()
         .from(format!("Julie <{}>",JULIE_EMAIL).parse().unwrap())
         .to(format!("{} <{}>",alias,to).parse().unwrap())
-        .subject("Woof Woof")
+        .subject("Complete Email Authentication")
         .multipart(MultiPart::alternative_plain_html(
-            String::from("Hello, world! :)"),
+            String::from(message),
             String::from(message),
         )).unwrap();
 
@@ -32,7 +32,7 @@ pub fn send(to: &str, alias: &str, message: &str)->bool{
 }
 
 pub fn readHTML()->String{
-    let config_file = format!("{}/{}/{}", env::var("HOME").unwrap(), "julie", "email.html");
+    let config_file = format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, "email.html");
     let mut file = File::open(config_file).unwrap();
     let mut data = String::new();
     file.read_to_string(&mut data).unwrap();

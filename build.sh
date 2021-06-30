@@ -3,6 +3,7 @@
 mkdir -p ~/.julie/.keys
 cp $PWD/art/hound.ascii ~/.julie/banner.ascii
 cp $PWD/config.json ~/.julie/config.json
+cp $PWD/email.html ~/.julie/email.html
 
 cargo build --release
 
