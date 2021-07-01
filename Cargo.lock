@@ -1444,6 +1444,7 @@ dependencies = [
  "base32",
  "base64 0.12.3",
  "bat",
+ "bincode",
  "check-if-email-exists",
  "clap",
  "data-encoding",

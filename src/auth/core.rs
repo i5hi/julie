@@ -146,7 +146,7 @@ mod tests {
         let signature = rsa::sign(message, private_key);
 
         let ready_client = verify_apikey(&signatory_client.clone().apikey).unwrap();
-   
+        println!("{:?},{}",ready_client.clone(),encoded.clone());
         assert!(verify_basic_auth(ready_client.clone(), encoded));
         assert!(verify_signature(ready_client.clone(), message, &signature));
 
