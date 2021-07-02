@@ -1,0 +1,87 @@
+version: '3'
+services:
+    nginx:
+        container_name: mew
+        build:
+            context: infra/nginx
+            dockerfile: Dockerfile
+        image: nginx:mainline-alpine
+        restart: unless-stopped
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - web-root:/var/www/html
+            - ./nginx:/etc/nginx/conf.d
+            - certbot-etc:/etc/letsencrypt
+            - certbot-var:/var/lib/letsencrypt
+            - certbot-www:/var/www/certbot
+            - dhparam:/etc/ssl/certs
+    
+        networks:
+            - stackmate-network
+    
+    certbot:
+        container_name: electrode
+        image: certbot/certbot
+        volumes:
+            - certbot-etc:/etc/letsencrypt
+            - certbot-var:/var/lib/letsencrypt
+            - certbot-www:/var/www/certbot
+        depends_on:
+            - nginx
+        command: certonly --webroot --webroot-path=/var/www/certbot --email tech@stackmate.in --agree-tos --no-eff-email --force-renewal -d julie.stackmate.net
+        networks:
+            - stackmate-network
+            
+    postfix:
+        container_name: ada
+        image: boky/postfix
+        restart: always
+        ports:
+            - "25:587"
+        volumes:
+            - postfix-spool:/var/spool/postfix
+            - postfix-etc:/etc/postfix
+            - postfix-keys:/etc/opendkim/keys
+        environment:
+            ALLOWED_SENDER_DOMAINS: "julie.stackmate.net"
+            POSTFIX_hostname: "stackmate"
+            TZ: "Asia/Kolkata"
+            DKIM_SELECTOR: "julie"
+        networks:
+            - stackmate-network
+
+volumes:
+    postfix-spool:
+    postfix-etc:
+    postfix-keys:
+    web-root:
+    certbot-var:    
+    certbot-etc:
+        driver: local
+        driver_opts:
+            type: none
+            device: $HOME/.ssl/certbot
+            o: bind
+    dhparam:
+        driver: local
+        driver_opts:
+            type: none
+            device: $HOME/.ssl/dhparam
+            o: bind
+    julie-data:
+        driver: local
+        driver_opts:
+            type: none
+            device: $HOME/.julie
+            o: bind
+          
+    
+networks:
+    stackmate-network:
+        driver: bridge
+    
+          
+
+      

@@ -116,7 +116,7 @@ pub fn send_email_token(client: ClientAuth)->bool{
 
     let status = if client.update(AuthUpdate::EmailExpiry,&expiry.to_string()) 
         && client.update(AuthUpdate::EmailToken,&token){
-            let message = format!("https://test.satswala.com/auth/callback?uid={}token={}", &client.uid,token);
+            let message = format!("https://test.satswala.com/julie/callback?uid={}token={}", &client.uid,token);
             email::send(&client.email, "Alias", &message)
     }else{
         false

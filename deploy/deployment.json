@@ -1,0 +1,16 @@
+{
+    "name": "Stackmate Network",
+    "admin": "Vishal Menon",
+    "co-pilot": "Karan Saini",
+    "server":{
+        "host": "stackmate.net",
+        "subdomain": "julie",
+        "provider": {
+            "name": "lunanode",
+            "api_id": "$LUNA_NODE_API_ID",
+            "api_key": "$LUNA_NODE_API_KEY",
+            "ssh_id": "$LUNA_NODE_API_ID"
+        }
+    }
+    
+}
