@@ -45,7 +45,7 @@ pub fn readHTML()->String{
 mod tests {
     use super::*;
 
-    #[test]
+    #[test] #[ignore]
     fn test_sendmail() {        
         let to = "vishalmenon.92@gmail.com";
         let alias = "vmd";

@@ -1,6 +1,6 @@
 use std::str;
 
-use crate::auth::client::{ClientAuth,AuthLevel};
+use crate::auth::client::{ClientAuth,AuthFactor, AuthUpdate};
 use crate::auth::service::{ServiceIdentity};
 
 use crate::lib::hash;
@@ -15,48 +15,31 @@ use oath::{HashType};
 pub fn update_basic_auth(client: ClientAuth, username: &str, password: &str)->ClientAuth{
   
     let client = ClientAuth::read(&client.clone().uid).unwrap();
-    match client.clone().level{
-        AuthLevel::ApiKey=>{   
-            client.update("level",AuthLevel::Basic.as_str())
-        },
-        _=>{
-            
-            false
-        },
-    };
-    client.update("username",username);
-    client.update("pass512",&hash::salted512(password,&client.salt));
+
+    client.update(AuthUpdate::Username,username);
+    client.update(AuthUpdate::P512,&hash::salted512(password,&client.salt));
+    client.update(AuthUpdate::Factors,AuthFactor::Basic.as_str());
     client
 
 }
 pub fn update_public_key(client: ClientAuth, public_key: &str)->ClientAuth{
-    client.clone().update("public_key",public_key);
     let client = ClientAuth::read(&client.clone().uid).unwrap();
-    match client.clone().level{
-        AuthLevel::ApiKey=>client.update("level",AuthLevel::Signature.as_str()),
-        AuthLevel::Basic=>client.update("level",AuthLevel::Signature.as_str()),
-        AuthLevel::Totp=>client.update("level",AuthLevel::MultiFactor.as_str()),
-        _=>false
-    };
+    client.update(AuthUpdate::PublicKey,public_key);
+    client.update(AuthUpdate::Factors,AuthFactor::Signature.as_str());
     client
 
 }
 pub fn update_totp_key(client: ClientAuth)->Result<ClientAuth,S5ErrorKind>{
-    
-    let allowed = match client.clone().level{
-        AuthLevel::Totp=>false,
-        AuthLevel::MultiFactor=>false,
-        _=>true
-    };
-    if allowed {
-        let key =keygen(Encoding::Base32);
-        client.update("totp_key", &key);
-        let client = ClientAuth::read(&client.uid).unwrap();
-        Ok(client)
+    let client = ClientAuth::read(&client.clone().uid).unwrap();
+    if client.factors.contains(&AuthFactor::Totp){
+        return Err(S5ErrorKind::TotpKeyEstablished)
     }
-    else {
-        Err(S5ErrorKind::TotpKeyEstablished)
+    else{
+        client.update(AuthUpdate::TotpKey,&keygen(Encoding::Base32));
+        client.update(AuthUpdate::Factors,AuthFactor::Signature.as_str());
     }
+
+    Ok(client)
 
 }
 /// Since this initializes the auth process, we return a ClientAuth, where other verification functions return bool
@@ -84,12 +67,9 @@ pub fn verify_signature(client: ClientAuth, message: &str, signature: &str)->boo
 }
 pub fn verify_totp(client: ClientAuth, otp: u64)->bool{
     if totp::generate_otp(client.clone().totp_key, HashType::SHA1)==otp {
-        match client.clone().level{
-            AuthLevel::ApiKey=>client.clone().update("level",AuthLevel::Totp.as_str()),
-            AuthLevel::Basic=>client.clone().update("level",AuthLevel::Totp.as_str()),
-            AuthLevel::Signature=>client.clone().update("level",AuthLevel::MultiFactor.as_str()),
-            _=>true
-        }
+        client.clone().update(AuthUpdate::Factors,AuthFactor::Totp.as_str());
+        true
+        
     }
     else{
         false
@@ -100,7 +80,7 @@ pub fn issue_token(client: ClientAuth, service_name: &str)->Option<String>{
         Some(service)=>service,
         None=>return None // Return an Error instead
     };
-    let token = jwt::issue(client.uid, service.shared_secret, service.name, client.level.as_str().to_string());
+    let token = jwt::issue(client.uid, service.shared_secret, service.name, "Will be a comma separated list of auth methods.".to_string());
     Some(token)
 }
 

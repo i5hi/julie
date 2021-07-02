@@ -3,7 +3,7 @@ use std::str;
 
 // use tracing::instrument;
 
-use crate::auth::client::{AuthLevel, ClientAuth};
+use crate::auth::client::{AuthFactor, ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
 use crate::auth::core;
@@ -136,7 +136,7 @@ pub fn filter_signature(
     let client = client?;
     let message = "timestamp=".to_string() + &timestamp.to_string();
     let mut verify = true;
-    if client.level == AuthLevel::Signature || client.level == AuthLevel::MultiFactor {
+    if client.factors.contains(&AuthFactor::Signature) || client.factors.contains(&AuthFactor::All) {
         verify = core::verify_signature(client.clone(), &message, &signature);
     }
 
@@ -153,7 +153,7 @@ pub fn filter_totp(
 ) -> Result<ClientAuth, warp::Rejection> {
     let client = client?;
     let mut verify = true;
-    if client.level == AuthLevel::Totp || client.level == AuthLevel::MultiFactor {
+    if client.factors.contains(&AuthFactor::Totp) || client.factors.contains(&AuthFactor::All) {
         verify = core::verify_totp(client.clone(), otp);
     }
     if verify {
