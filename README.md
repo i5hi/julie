@@ -9,10 +9,30 @@ a simple multi-factor authentication server, inspired by Kerberos.
 ## test
 
 ### units
+
+
+### ENSURE THE FOLLOWING TESTS ARE IGNORED IF YOU ARE RUNNING TESTS ON PROD:
+
+- src/auth/client/delete_all_clients
+- src/auth/service/delete_all_services
+- src/auth/core/core_email_composite
+- src/lib/email/test_sendmail
+
+*They should be ignored by default, unless you have changed it.*
+
+To run all invidual unit tests:
+
 ```bash
-cargo test -- --test-threads 1
-# this is required to ensure that the service tests run after sled so that a db is created
+cargo test --bin jd -- --test-threads 1
+# test-threads: required to ensure that the service tests run after sled so that a db is created.
+# bin: required to ensure the suite runs only once. Since we have two bins, it will run twice by default.
+
+# ALTERNATIVELY
+bash test/all.bash
+# will do the above
+
 ```
+
 
 ### integration
 To test the daemon with the bash client, first create a new client with the cli
