@@ -30,11 +30,12 @@ pub fn update_basic_auth(client: ClientAuth, username: &str, password: &str)->Cl
 }
 pub fn update_email(client: ClientAuth, email: &str)->ClientAuth{
   
-    let client = ClientAuth::read(&client.clone().uid).unwrap();
 
     client.update(AuthUpdate::Email,email);
     client.update(AuthUpdate::Factors,AuthFactor::Email.as_str());
+    let client = ClientAuth::read(&client.clone().uid).unwrap();
     client
+
 
 }
 pub fn update_public_key(client: ClientAuth, public_key: &str)->ClientAuth{
@@ -116,7 +117,7 @@ pub fn send_email_token(client: ClientAuth)->bool{
     let status = if client.update(AuthUpdate::EmailExpiry,&expiry.to_string()) 
         && client.update(AuthUpdate::EmailToken,&token){
             let message = "https://test.satswala.com/julie?token=".to_string() + &token;
-            email::send(&client.email,"Alias", &message)
+            email::send(&client.email, "Alias", &message)
     }else{
         false
     };
@@ -213,12 +214,13 @@ mod tests {
     }
 
     #[test] #[ignore]
-    fn email_composite(){
+    fn core_email_composite(){
         let client_auth = ClientAuth::new();
         // admin gives client this new client_auth with an apikey
         // client then registers a username and password
         let email = "vishalmenon.92@gmail.com";
         let client_auth = update_email(client_auth.clone(), email);
-        assert!(send_email_token(client_auth.clone()));
+        send_email_token(client_auth.clone());
+        assert!(client_auth.delete())
     }
 }
