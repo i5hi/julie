@@ -1,11 +1,10 @@
 extern crate lettre;
 
 use std::env;
-use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use lettre::{Message, Transport, SmtpTransport};
-use lettre::message::{ MultiPart};
+use lettre::message::{MultiPart};
 
 use crate::lib::database::STORAGE_ROOT;
 
@@ -31,7 +30,7 @@ pub fn send(to: &str, alias: &str, message: &str)->bool{
 
 }
 
-pub fn readHTML()->String{
+pub fn read_html()->String{
     let config_file = format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, "email.html");
     let mut file = File::open(config_file).unwrap();
     let mut data = String::new();
@@ -51,7 +50,7 @@ mod tests {
         let alias = "vmd";
         let message = "https://test.satswala.com/julie?token=supermostsecrettokenforyoumyfriendlyboi";
         assert!(send(to, alias, message));
-        let message = readHTML();
+        let message = read_html();
         assert!(send(to, alias, &message))
     }
 

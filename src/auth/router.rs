@@ -1,5 +1,4 @@
 use crate::auth::dto;
-use crate::lib::error;
 use tracing::{instrument};
 use warp::{self, Filter};
 use crate::lib::server;

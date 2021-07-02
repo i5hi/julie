@@ -6,17 +6,7 @@ mod auth;
 mod lib;
 
 use crate::lib::aes;
-/**
- * 
- * name: "\x1b[0;1mpikachu\x1b[0m"
-version: "\x1b[0;94m0.4.6\x1b[0m"
-author: dev@stackmate.net
-about: "\x1b[0;94msatsbank.io client; with sovereign bitcoin tools\x1b[0m"
-before_help: "\x1b[0;92m*******************************************vires***************************************************\x1b[0m"
-after_help:  "\x1b[0;92m****************************************in.numeris**************************************************\x1b[0m"
-usage: pikachu [SUBCOMMAND] [ARGS]
 
- */
 fn main() {
     let matches = App::new("\x1b[0;92mjc\x1b[0m")
         .about("\x1b[0;94mJulie admin tools.\x1b[0m")
@@ -190,7 +180,7 @@ fn main() {
 
                         let encoding = match aes::Encoding::from_str(encoding_str){
                             Ok(encoding)=>{encoding},
-                            Err(e)=>{aes::Encoding::Hex}
+                            Err(_)=>{aes::Encoding::Hex}
                         };
                         let random = aes::keygen(encoding);
                         println!("{:#?}",random);

@@ -1,14 +1,20 @@
 use std::str;
+use std::time::SystemTime;
 
-use crate::auth::client::{ClientAuth,AuthFactor, AuthUpdate};
+
+use crate::auth::client::{ClientAuth,AuthFactor, AuthUpdate, EMAIL_TOKEN_LIFETIME};
 use crate::auth::service::{ServiceIdentity};
 
 use crate::lib::hash;
 use crate::lib::rsa;
+
+use crate::lib::aes;
 use crate::lib::totp;
 use crate::lib::jwt;
 use crate::lib::aes::{keygen,Encoding};
 use crate::lib::error::S5ErrorKind;
+use crate::lib::email;
+
 use oath::{HashType};
 
 
@@ -19,6 +25,15 @@ pub fn update_basic_auth(client: ClientAuth, username: &str, password: &str)->Cl
     client.update(AuthUpdate::Username,username);
     client.update(AuthUpdate::P512,&hash::salted512(password,&client.salt));
     client.update(AuthUpdate::Factors,AuthFactor::Basic.as_str());
+    client
+
+}
+pub fn update_email(client: ClientAuth, email: &str)->ClientAuth{
+  
+    let client = ClientAuth::read(&client.clone().uid).unwrap();
+
+    client.update(AuthUpdate::Email,email);
+    client.update(AuthUpdate::Factors,AuthFactor::Email.as_str());
     client
 
 }
@@ -74,6 +89,39 @@ pub fn verify_totp(client: ClientAuth, otp: u64)->bool{
     else{
         false
     }
+}
+pub fn verify_email_token(client: ClientAuth, token: String)->bool{
+    let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+    };
+
+    if client.factors.contains(&AuthFactor::Email) 
+        && client.email_token == token
+        && client.email_expiry > now{
+            true
+        }
+    else{
+        false
+    }
+}
+pub fn send_email_token(client: ClientAuth)->bool{
+    let expiry = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs() + EMAIL_TOKEN_LIFETIME,
+        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+    };
+
+    let token = aes::keygen(aes::Encoding::Hex);
+
+    let status = if client.update(AuthUpdate::EmailExpiry,&expiry.to_string()) 
+        && client.update(AuthUpdate::EmailToken,&token){
+            let message = "https://test.satswala.com/julie?token=".to_string() + &token;
+            email::send(&client.email,"Alias", &message)
+    }else{
+        false
+    };
+    status
+
 }
 pub fn issue_token(client: ClientAuth, service_name: &str)->Option<String>{
     let service = match ServiceIdentity::init(service_name){
@@ -162,5 +210,15 @@ mod tests {
         ()
 
 
+    }
+
+    #[test] #[ignore]
+    fn email_composite(){
+        let client_auth = ClientAuth::new();
+        // admin gives client this new client_auth with an apikey
+        // client then registers a username and password
+        let email = "vishalmenon.92@gmail.com";
+        let client_auth = update_email(client_auth.clone(), email);
+        assert!(send_email_token(client_auth.clone()));
     }
 }

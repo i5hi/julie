@@ -65,7 +65,7 @@ pub struct ClientAuth {
     pub pass512: String,
     pub email : String,
     pub email_token: String,
-    pub email_expiry: String,
+    pub email_expiry: u64,
     pub public_key: String,
     pub totp_key: String,
     pub factors: Vec<AuthFactor>,
@@ -84,6 +84,7 @@ pub enum AuthUpdate{
     Factors
 }
 
+pub const EMAIL_TOKEN_LIFETIME: u64 = 600;
 
 impl ClientAuth {
     /// Used by the admin to create a new client with a uid and apikey index.
@@ -96,7 +97,7 @@ impl ClientAuth {
             salt: hash::create_salt(),
             email: "None".to_string(),
             email_token: "None".to_string(),
-            email_expiry: "None".to_string(),
+            email_expiry: 0,
             username: "None".to_string(),
             pass512: "None".to_string(),
             public_key: "None".to_string(),
@@ -168,7 +169,7 @@ impl ClientAuth {
             AuthUpdate::P512=> updating_client.pass512 = value.to_string(),
             AuthUpdate::Email=> updating_client.email = value.to_string(),
             AuthUpdate::EmailToken=> updating_client.email_token = value.to_string(),
-            AuthUpdate::EmailExpiry=> updating_client.email_expiry = value.to_string(),
+            AuthUpdate::EmailExpiry=> updating_client.email_expiry = value.parse::<u64>().unwrap(),
             AuthUpdate::PublicKey=> updating_client.public_key = value.to_string(),
             AuthUpdate::TotpKey=> updating_client.totp_key = value.to_string(),
             AuthUpdate::Factors=> {
@@ -179,7 +180,6 @@ impl ClientAuth {
                     updating_client.factors.push(AuthFactor::from_str(value).unwrap());
                 }
             },
-            _=>return false
         };
         let root = database::get_root(database::CLIENT).unwrap();
         let main_tree = database::get_tree(root.clone(), &self.clone().uid).unwrap();
@@ -265,9 +265,6 @@ pub fn remove_client_trees() -> bool {
 mod tests {
     use super::*;
     use crate::lib::hash::{sha256,salted512};
-    use std::fs::File;
-    use std::io::prelude::*;
-
 
     #[test]
     fn client_composite() {
