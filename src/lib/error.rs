@@ -7,6 +7,10 @@ use thiserror::Error;
 pub enum S5ErrorKind{
     #[error("Api Key Sucks!")]
     ApiKey,
+    #[error("UID Sucks!")]
+    UID,
+    #[error("Email Auth Failed!")]
+    Email,
     #[error("Signature Sucks!")]
     Signature,
     #[error("Basic Auth Sucks!")]

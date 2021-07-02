@@ -61,6 +61,14 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
                 code = StatusCode::UNAUTHORIZED;
                 message = "Expired Token";
             }
+            S5ErrorKind::UID => {
+                code = StatusCode::UNAUTHORIZED;
+                message = "Bad UID.";
+            }
+            S5ErrorKind::Email => {
+                code = StatusCode::UNAUTHORIZED;
+                message = "Email token invalid or expired.";
+            }
      
         }
     } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {

@@ -23,6 +23,22 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and(warp::body::json())
         .and_then(dto::handle_put_basic)
         .with(warp::trace::named("auth-put-basic"));
+    
+    let put_email = warp::path("auth")
+        .and(warp::path("email"))
+        .and(warp::put())
+        .and(warp::header::<String>("x-sats-api-key"))
+        .and(warp::body::content_length_limit(1024 * 16))
+        .and(warp::body::json())
+        .and_then(dto::handle_put_email)
+        .with(warp::trace::named("auth-put-email"));
+    
+    let post_email_callback = warp::path("auth")
+        .and(warp::path("callback"))
+        .and(warp::post())
+        .and(warp::query::<dto::EmailCallbackQuery>())
+        .and_then(dto::handle_post_email_callback)
+        .with(warp::trace::named("auth-post-email-callback"));
         
     let put_pubkey = warp::path("auth")
         .and(warp::path("pubkey"))
@@ -34,30 +50,6 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and_then(dto::handle_put_pubkey)
         .with(warp::trace::named("auth-put-pubkey"));
 
-    // let get_totp = auth_root.clone()
-    //     .and(warp::path("totp"))
-    //     .and(warp::path("key"))
-    //     .and(warp::get())
-    //     .and(warp::header::<String>("x-sats-api-key"))
-    //     .map(dto::filter_apikey)
-    //     .and(warp::header::<String>("Authorization"))
-    //     .map(dto::filter_basic_auth)
-    //     .and_then(dto::handle_get_totp_key)
-    //     .recover(error::handle_rejection)
-    //     .with(warp::trace::named("auth-get-totp"));
-
-    // let post_totp = auth_root.clone()
-    //     .and(warp::path("totp"))
-    //     .and(warp::post())
-    //     .and(warp::header::<String>("x-sats-api-key"))
-    //     .map(dto::filter_apikey)
-    //     .and(warp::header::<String>("Authorization"))
-    //     .map(dto::filter_basic_auth)
-    //     .and(warp::body::content_length_limit(1024 * 16))
-    //     .and(warp::body::json())
-    //     .and_then(dto::handle_post_totp)
-    //     .recover(error::handle_rejection)
-    //     .with(warp::trace::named("auth-post-totp"));
 
     let get_token =warp::path("auth")
         .and(warp::path("token"))
@@ -73,8 +65,10 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
 
     let auth_routes = health
         .or(put_basic)
+        .or(put_email)
         .or(put_pubkey)
         .or(get_token)
+        .or(post_email_callback)
         .recover(server::handle_rejection)
         .with(warp::trace::request());
 

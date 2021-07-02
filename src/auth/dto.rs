@@ -15,16 +15,26 @@ pub struct AuthBasic {
     username: String,
     pass256: String,
 }
-
+#[derive(Deserialize, Serialize,Debug, Clone)]
+pub struct AuthEmail {
+    email: String,
+}
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ServiceQuery {
     service: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct EmailCallbackQuery {
+    uid: String,
+    token: String
 }
 
 #[derive(Deserialize, Serialize,Debug, Clone)]
 pub struct AuthPublicKey {
     public_key: String,
 }
+
 #[derive(Deserialize, Serialize,Debug, Clone)]
 pub struct AuthToken {
     token: String,
@@ -35,7 +45,8 @@ pub struct TotpEstablished {
     status: bool,
 }
 
-/// Handle a warp http request to register basic auth username and pass256.
+
+/// Handle a warp http request to update basic auth username and pass256.
 pub async fn handle_put_basic(
     apikey: String,
     auth_basic: AuthBasic,
@@ -45,7 +56,39 @@ pub async fn handle_put_basic(
     let _client = core::update_basic_auth(client, &auth_basic.username, &auth_basic.pass256);
     Ok(server::handle_response(warp::reply::json(&auth_basic)).await)
 }
-/// Handle a warp http request to register a public_key.
+
+/// Handle a warp http request to update an email.
+pub async fn handle_put_email(
+    apikey: String,
+    auth_email: AuthEmail,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    
+    let client = filter_apikey(apikey)?;
+    let _client = core::update_email(client, &auth_email.email);
+    Ok(server::handle_response(warp::reply::json(&auth_email)).await)
+}
+/// Handle a warp http request to handle email auth callback.
+pub async fn handle_post_email_callback(
+    callback_query: EmailCallbackQuery
+) -> Result<impl warp::Reply, warp::Rejection> {
+    
+    let client = match ClientAuth::init(&callback_query.uid){
+        Some(client)=>client,
+        None=>return Err(warp::reject::custom(S5ErrorKind::UID))
+    };
+
+    if core::verify_email_token(client,callback_query.token){
+        let verify = TotpEstablished {
+            status: true,
+        };
+        Ok(server::handle_response(warp::reply::json(&verify)).await)
+
+    }
+    else{
+        Err(warp::reject::custom(S5ErrorKind::Email))
+    }
+}
+/// Handle a warp http request to update a public_key.
 pub async fn handle_put_pubkey(
     apikey: String,
     encoded_basic: String,
