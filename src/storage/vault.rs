@@ -40,39 +40,53 @@ impl JulieStorage for VaultStorage{
     fn create(&mut self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> std::result::Result<bool, String>{
         match db{
             JulieDatabase::Client=>{
-                // let serialized = serde_json::to_string(&object.0).unwrap();
-                Ok(self.http_client.set_custom_secret(object.clone().0.uid,&object).is_ok())
+                Ok(self.http_client.set_custom_secret(object.clone().0.uid,&object.0).is_ok())
 
             }
             JulieDatabase::Service=>{
-                Ok(self.http_client.set_custom_secret(object.clone().1.sid,&object).is_ok())
+                Ok(self.http_client.set_custom_secret(object.clone().1.sid,&object.1).is_ok())
             }
         }
     }
     fn read(&mut self,db: JulieDatabase, index: &str)-> std::result::Result<(ClientAuth,ServiceIdentity),String>{
         match db{
             JulieDatabase::Client=>{
-                Err("Not implemented".to_string())
+                let secret: Result<ClientAuth> = self.http_client.get_custom_secret(index);
+                if secret.is_ok() {
+                    Ok((secret.unwrap(),ServiceIdentity::dummy()))
+                }
+                else{
+                    Err("None".to_string())
+                }
+
             }
             JulieDatabase::Service=>{
-                Err("Not implemented".to_string())
+                let secret: Result<ServiceIdentity> = self.http_client.get_custom_secret(index);
+                if secret.is_ok() {
+                    Ok((ClientAuth::new(),secret.unwrap()))
+                }
+                else{
+                    Err("None".to_string())
+                }
             }
         }
     }
     fn update(&mut self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> std::result::Result<bool, String>{
         match db{
             JulieDatabase::Client=>{
-                Err("Not implemented".to_string())
+                // let serialized = serde_json::to_string(&object.0).unwrap();
+                Ok(self.http_client.set_custom_secret(object.clone().0.uid,&object.0).is_ok())
+
             }
             JulieDatabase::Service=>{
-                Err("Not implemented".to_string())
+                Ok(self.http_client.set_custom_secret(object.clone().1.sid,&object.1).is_ok())
             }
         }
     }
     fn delete(&mut self, index: &str)-> std::result::Result<bool,String>{
 
-        Err("Not implemented".to_string())
-          
+        Ok(self.http_client.delete_secret(index).is_ok())
+         
     }
 }
 
@@ -86,7 +100,18 @@ mod tests {
     fn vault_implementation() {
         let mut client_storage = VaultStorage::init(JulieDatabase::Client).unwrap();
         let client = ClientAuth::new();
-        let created = client_storage.create(JulieDatabase::Client, (client, ServiceIdentity::dummy())).unwrap();
-        assert!(created)
+        let created = client_storage.create(JulieDatabase::Client, (client.clone(), ServiceIdentity::dummy())).unwrap();
+        assert!(created);
+        let read = client_storage.read(JulieDatabase::Client,&client.clone().uid).unwrap();
+        assert_eq!(read.clone().0.uid, client.clone().uid);
+        assert_eq!(read.clone().0.apikey, client.clone().apikey);
+        assert!(client_storage.delete(&read.0.uid).unwrap());
+        let fail_read = client_storage.read(JulieDatabase::Client,&client.clone().uid);
+        match fail_read{
+            Ok(_)=>{},
+            Err(e)=>assert_eq!(&e,"None")
+
+        }
+
     }
 }

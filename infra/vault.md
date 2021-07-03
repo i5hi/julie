@@ -53,25 +53,25 @@ vault policy write julie-test-service /vault/config/policies/julie/test/service.
 Issue tokens for each policy
 
 ```bash
-vault token create -policy=julie-test-client --no-default-policy
+vault token create -policy=julie-test-client
 # Key                  Value
 # ---                  -----
 # token                s.3V26ZP5mVqH6ZeQsnjF0hflr
 # token_accessor       PKd7kspWNhJ08x7vEsXuqL7z
 # token_duration       768h
 # token_renewable      true
-# token_policies       ["julie-test-client"]
+# token_policies       ["default", "julie-test-client"]
 # identity_policies    []
 # policies             ["julie-test-client"]
 
-vault token create -policy=julie-test-service --no-default-policy
+vault token create -policy=julie-test-service
 # Key                  Value
 # ---                  -----
 # token                s.r3SU9DMv4sALWVhnZSREoMwN
 # token_accessor       qZcmW1KMIbUrxZ5AMtbxldXR
 # token_duration       768h
 # token_renewable      true
-# token_policies       ["julie-test-service"]
+# token_policies       ["default", "julie-test-service"]
 # identity_policies    []
 # policies             ["julie-test-service"]
 
