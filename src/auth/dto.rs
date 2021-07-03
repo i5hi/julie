@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::str;
 // use tracing::instrument;
 
-use crate::storage::interface::{JulieStorage,JulieDatabase};
+use crate::storage::interface::{JulieStorage,JulieDatabase, JulieDatabaseItem};
 
 use crate::auth::client::{AuthFactor, ClientAuth};
 
@@ -69,28 +69,28 @@ pub async fn handle_put_email(
     Ok(server::handle_response(warp::reply::json(&auth_email)).await)
 }
 /// Handle a warp http request to handle email auth callback.
-pub async fn handle_post_email_callback(
-    callback_query: EmailCallbackQuery,
-    mut client_storage: impl JulieStorage,
+// pub async fn handle_post_email_callback(
+//     callback_query: EmailCallbackQuery,
+//     mut client_storage: impl JulieStorage,
 
-) -> Result<impl warp::Reply, warp::Rejection> {
+// ) -> Result<impl warp::Reply, warp::Rejection> {
 
-    let client = match client_storage.read(JulieDatabase::Client, &callback_query.uid){
-        Ok(result)=>result.0,
-        Err(_)=>return Err(warp::reject::custom(S5ErrorKind::UID))
-    };
+//     let client = match client_storage.read(JulieDatabase::Client, &callback_query.uid){
+//         Ok(result)=>result.0,
+//         Err(_)=>return Err(warp::reject::custom(S5ErrorKind::UID))
+//     };
 
-    if client.verify_email_token(callback_query.token){
-        let verify = TotpEstablished {
-            status: true,
-        };
-        Ok(server::handle_response(warp::reply::json(&verify)).await)
+//     if client.verify_email_token(callback_query.token){
+//         let verify = TotpEstablished {
+//             status: true,
+//         };
+//         Ok(server::handle_response(warp::reply::json(&verify)).await)
 
-    }
-    else{
-        Err(warp::reject::custom(S5ErrorKind::Email))
-    }
-}
+//     }
+//     else{
+//         Err(warp::reject::custom(S5ErrorKind::Email))
+//     }
+// }
 /// Handle a warp http request to update a public_key.
 pub async fn handle_put_pubkey(
     apikey: String,
@@ -143,7 +143,10 @@ pub async fn handle_get_token(
     match service_storage.read(JulieDatabase::Service, &service.clone().name){
         Ok(result)=>{
             let token = AuthToken {
-                token: result.1.issue_token(client.uid).unwrap(),
+                token: match result {
+                    JulieDatabaseItem::Client(_)=>panic!("HOW CAN SHE SLAP?"),
+                    JulieDatabaseItem::Service(service)=>{service.issue_token(client.uid).unwrap()},
+                },
             };
         
             Ok(server::handle_response(warp::reply::json(&token)).await)
@@ -160,7 +163,11 @@ pub async fn handle_get_token(
 /// /// FIIIXXXXX THISSS
 pub fn filter_apikey(mut client_storage: impl JulieStorage, key: String) -> Result<ClientAuth, warp::Rejection> {
     let uid = "temp".to_string();
-    let client = client_storage.read(JulieDatabase::Client,&uid).unwrap().0;
+    let client = match client_storage.read(JulieDatabase::Client,&uid).unwrap(){
+        JulieDatabaseItem::Client(client)=>client,
+        JulieDatabaseItem::Service(_)=>{panic!("HOW CAN SHE SLAP?")},
+    };
+
     if client.verify_apikey(&uid, &key) {
         Ok(client)  
     }else{

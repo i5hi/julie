@@ -24,17 +24,18 @@ impl JulieDatabase{
     }
 }
 
-// This over generalized storage interface makes tradeoffs for its convenient usage.Deserialize
-// It is up to the user of this interface to ensure that the object being passed :Deserialize
-// 1. is a ClientAuth if db is Client
-// 2. is a ServiceIdentity if the db is Service
-// Failinig to do so will result in data loss and you will lose sats!
-// Read will give back a default value in the tuple for the unselected database
+#[derive(Debug)]
+pub enum JulieDatabaseItem{
+    Client(ClientAuth),
+    Service(ServiceIdentity)
+}
+
+
 pub trait JulieStorage: Sized + Clone + Send {
     fn init(db: JulieDatabase) -> Result<Self, String>;
-    fn create(&mut self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
-    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>;
-    fn update(&mut self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
+    fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
+    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>;
+    fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn delete(&mut self, index: &str)-> Result<bool,String>;
 }
 

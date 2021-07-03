@@ -40,13 +40,13 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .and_then(dto::handle_put_email)
         .with(warp::trace::named("julie-put-email"));
     
-    let post_email_callback = warp::path("julie")
-        .and(warp::path("callback"))
-        .and(warp::post())
-        .and(warp::query::<dto::EmailCallbackQuery>())
-        .and(with_backend(client_storage.clone()))
-        .and_then(dto::handle_post_email_callback)
-        .with(warp::trace::named("julie-post-email-callback"));
+    // let post_email_callback = warp::path("julie")
+    //     .and(warp::path("callback"))
+    //     .and(warp::post())
+    //     .and(warp::query::<dto::EmailCallbackQuery>())
+    //     .and(with_backend(client_storage.clone()))
+    //     .and_then(dto::handle_post_email_callback)
+    //     .with(warp::trace::named("julie-post-email-callback"));
         
     let put_pubkey = warp::path("julie")
         .and(warp::path("pubkey"))
@@ -79,7 +79,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
         .or(put_email)
         .or(put_pubkey)
         .or(get_token)
-        .or(post_email_callback)
+        // .or(post_email_callback)
         .recover(server::handle_rejection)
         .with(warp::trace::request());
 

@@ -4,17 +4,20 @@ use std::time::SystemTime;
 use crate::auth::service::{ServiceIdentity};
 use crate::auth::client::{ClientAuth,AuthFactor, EMAIL_TOKEN_LIFETIME};
 
-use crate::storage::interface::{JulieStorage, JulieDatabase};
+use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem};
 
 use crate::lib::hash;
 use crate::lib::aes;
 use crate::lib::aes::{keygen,Encoding};
 use crate::lib::error::S5ErrorKind;
 
-
+// RETURN A RESULT PLEASE
 pub fn update_basic_auth(mut storage: impl JulieStorage, client: ClientAuth, username: &str, password: &str)->ClientAuth{
-    
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    // the following will proceed with a new client - BAD
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+            JulieDatabaseItem::Client(client)=>client,
+            JulieDatabaseItem::Service(_)=>{panic!("OH NO! LOOK AT WHAT YOUVE DONE!")},
+    };
     updated.username = username.to_string();
     updated.pass512 = hash::salted512(password,&updated.salt);
     if updated.factors.contains(&AuthFactor::Basic){
@@ -23,7 +26,7 @@ pub fn update_basic_auth(mut storage: impl JulieStorage, client: ClientAuth, use
     else{
         updated.factors.push(AuthFactor::Basic);
     }
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         updated.clone()
     }
     else{
@@ -31,7 +34,10 @@ pub fn update_basic_auth(mut storage: impl JulieStorage, client: ClientAuth, use
     }
 }
 pub fn update_email(mut storage: impl JulieStorage, client: ClientAuth, email: &str)->ClientAuth{
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+        JulieDatabaseItem::Client(client)=>client,
+        JulieDatabaseItem::Service(_)=>{ClientAuth::new()},
+    };
     updated.email = email.to_string();
     if updated.factors.contains(&AuthFactor::Email){
         // do nothing
@@ -40,7 +46,7 @@ pub fn update_email(mut storage: impl JulieStorage, client: ClientAuth, email: &
         updated.factors.push(AuthFactor::Email);
     }
    
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         updated.clone()
     }
     else{
@@ -50,7 +56,11 @@ pub fn update_email(mut storage: impl JulieStorage, client: ClientAuth, email: &
 
 }
 pub fn update_public_key(mut storage: impl JulieStorage, client: ClientAuth, public_key: &str)->ClientAuth{
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+        JulieDatabaseItem::Client(client)=>client,
+        JulieDatabaseItem::Service(_)=>{panic!("OH NO! LOOK AT WHAT YOUVE DONE!")},
+    };
+    
     updated.public_key = public_key.to_string();
     if updated.factors.contains(&AuthFactor::Signature){
         // do nothing
@@ -59,7 +69,7 @@ pub fn update_public_key(mut storage: impl JulieStorage, client: ClientAuth, pub
         updated.factors.push(AuthFactor::Signature);
     }
    
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         updated.clone()
     }
     else{
@@ -68,7 +78,10 @@ pub fn update_public_key(mut storage: impl JulieStorage, client: ClientAuth, pub
 
 }
 pub fn update_totp_key(mut storage: impl JulieStorage, client: ClientAuth)->Result<ClientAuth,S5ErrorKind>{
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+        JulieDatabaseItem::Client(client)=>client,
+        JulieDatabaseItem::Service(_)=>{ClientAuth::new()},
+    };
 
     if updated.factors.contains(&AuthFactor::Totp){
         return Err(S5ErrorKind::TotpKeyEstablished)
@@ -77,7 +90,7 @@ pub fn update_totp_key(mut storage: impl JulieStorage, client: ClientAuth)->Resu
         updated.totp_key = keygen(Encoding::Base32);
     }
 
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         Ok(updated.clone())
     }
     else{
@@ -86,7 +99,10 @@ pub fn update_totp_key(mut storage: impl JulieStorage, client: ClientAuth)->Resu
 
 }
 pub fn update_email_status(mut storage: impl JulieStorage, client: ClientAuth)->Result<bool,S5ErrorKind>{
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+            JulieDatabaseItem::Client(client)=>client,
+            JulieDatabaseItem::Service(_)=>{panic!("OH NO! LOOK AT WHAT YOUVE DONE!")},
+    };
 
     let expiry = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs() + EMAIL_TOKEN_LIFETIME,
@@ -98,7 +114,7 @@ pub fn update_email_status(mut storage: impl JulieStorage, client: ClientAuth)->
     updated.email_expiry = expiry;
     updated.email_token = token;
 
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         Ok(true)
     }
     else{
@@ -108,7 +124,10 @@ pub fn update_email_status(mut storage: impl JulieStorage, client: ClientAuth)->
 
 }
 pub fn establish_totp(mut storage: impl JulieStorage, client: ClientAuth)->Result<ClientAuth,S5ErrorKind>{
-    let mut updated = storage.read(JulieDatabase::Client,&client.clone().uid).unwrap().0;
+    let mut updated = match storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
+        JulieDatabaseItem::Client(client)=>client,
+        JulieDatabaseItem::Service(_)=>{panic!("OH NO! LOOK AT WHAT YOUVE DONE!")},
+    };
 
     if updated.factors.contains(&AuthFactor::Totp){
         return Err(S5ErrorKind::TotpKeyEstablished)
@@ -117,7 +136,7 @@ pub fn establish_totp(mut storage: impl JulieStorage, client: ClientAuth)->Resul
         updated.factors.push(AuthFactor::Totp);
     }
 
-    if storage.update(JulieDatabase::Client,(updated.clone(),ServiceIdentity::dummy())).unwrap(){
+    if storage.update(JulieDatabaseItem::Client(updated.clone())).unwrap(){
         Ok(updated.clone())
     }
     else{
@@ -152,7 +171,7 @@ mod tests {
         //     db: "client".to_string()
         // };
         let mut client_storage = SledDb::init(JulieDatabase::Client).unwrap();
-        assert!(client_storage.create(JulieDatabase::Client,(client_auth.clone(),ServiceIdentity::dummy())).unwrap());
+        assert!(client_storage.create(JulieDatabaseItem::Client(client_auth.clone())).unwrap());
 
         // admin gives client this new client_auth with an apikey
         // client then registers a username and password
@@ -194,7 +213,7 @@ mod tests {
 
         let service = ServiceIdentity::new(service_name,&shared_secret);
         let mut service_storage = SledDb::init(JulieDatabase::Service).unwrap();
-        assert!(service_storage.create(JulieDatabase::Service, (ClientAuth::new(),service.clone())).unwrap());
+        assert!(service_storage.create(JulieDatabaseItem::Service(service.clone())).unwrap());
 
         let token = service.issue_token(signatory_client.clone().uid).unwrap();
         println!("Bearer {:#?}",token.clone());
@@ -208,7 +227,11 @@ mod tests {
         let otp = totp::generate_otp(mfa_client.clone().totp_key, HashType::SHA1);
         assert!(mfa_client.verify_totp(otp));
 
-        let mfa_client = client_storage.read(JulieDatabase::Client,&mfa_client.uid).unwrap().0;
+        let mfa_client = match client_storage.read(JulieDatabase::Client,&mfa_client.uid).unwrap(){
+                JulieDatabaseItem::Client(client)=>client,
+                JulieDatabaseItem::Service(_)=>panic!("OH NO! LOOK AT WHAT YOUVE DONE!"),
+        
+        };
         let token = service.issue_token(mfa_client.clone().uid).unwrap();
         println!("Bearer {:#?}",token.clone());
 
