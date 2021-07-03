@@ -39,14 +39,12 @@ impl ServiceIdentity {
    
     }
 
-
     pub fn issue_token(&self, uid: String)->Option<String>{
         let token = jwt::issue(uid.to_string(), self.shared_secret.to_string(), self.name.to_string(), "Will be a comma separated list of auth methods.".to_string());
         Some(token)
     }
 
 }
-// WARNING BREKAING VERSION
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -61,8 +59,5 @@ mod tests {
         // admin gives client this new client_auth with an apikey
 
     }
-
-
-
 
 }
