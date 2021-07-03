@@ -5,8 +5,8 @@ use crate::auth::client::{ClientAuth,AuthFactor};
 use crate::auth::service::{ServiceIdentity};
 
 use std::env;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+// use serde::{Deserialize, Serialize};
+// use std::str::FromStr;
 use std::str;
 
 pub const STORAGE_ROOT: &str = ".julie"; // Database
@@ -29,7 +29,7 @@ impl JulieStorage for SledDb {
             }
         }
     }
-    fn create(&self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String> {
+    fn create(&mut self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String> {
         match  db{
             JulieDatabase::Client=>{
                 let main_tree = get_tree(self.clone(), &object.0.uid).unwrap();
@@ -47,7 +47,7 @@ impl JulieStorage for SledDb {
         }
       
     }
-    fn read(&self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>{
+    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>{
         match db {
             JulieDatabase::Client=>{
                 match get_tree(self.clone(), index){
@@ -97,7 +97,7 @@ impl JulieStorage for SledDb {
         }
      
     }
-    fn update(&self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>{
+    fn update(&mut self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>{
         match db {
             JulieDatabase::Client=>{
           
@@ -122,7 +122,7 @@ impl JulieStorage for SledDb {
      
 
     }
-    fn delete(&self, index: &str)-> Result<bool,String>{
+    fn delete(&mut self, index: &str)-> Result<bool,String>{
         let tree = get_tree(self.clone(), index).unwrap();
         tree.clear().unwrap();
         tree.flush().unwrap();
@@ -287,7 +287,7 @@ mod tests {
         //     db: "client".to_string()
         // };
         // println!("{:?}",config);
-        let root = SledDb::init(JulieDatabase::Client).unwrap();
+        let mut root = SledDb::init(JulieDatabase::Client).unwrap();
         let new_client = ClientAuth::new();
         let status = root.create(JulieDatabase::Client, (new_client.clone(), ServiceIdentity::dummy())).unwrap();
         assert!(status);

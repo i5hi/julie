@@ -74,7 +74,7 @@ pub async fn handle_put_email(
 /// Handle a warp http request to handle email auth callback.
 pub async fn handle_post_email_callback(
     callback_query: EmailCallbackQuery,
-    client_storage: impl JulieStorage,
+    mut client_storage: impl JulieStorage,
 
 ) -> Result<impl warp::Reply, warp::Rejection> {
 
@@ -112,9 +112,7 @@ pub async fn handle_get_totp_key(
     client_storage: impl JulieStorage,
     client: Result<ClientAuth, warp::Rejection>,
 
-
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let storage = SledDb::init(JulieDatabase::Client).unwrap();
     let client = client?;
     let client = controller::update_totp_key(client_storage,client).unwrap();
     Ok(server::handle_response(warp::reply::json(&client)).await)
@@ -163,7 +161,7 @@ pub async fn handle_get_token(
 
 /// A warp filter for apikey auth UIDDD
 /// /// FIIIXXXXX THISSS
-pub fn filter_apikey(client_storage: impl JulieStorage, key: String) -> Result<ClientAuth, warp::Rejection> {
+pub fn filter_apikey(mut client_storage: impl JulieStorage, key: String) -> Result<ClientAuth, warp::Rejection> {
     let uid = "temp".to_string();
     let client = client_storage.read(JulieDatabase::Client,&uid).unwrap().0;
     if client.verify_apikey(&uid, &key) {

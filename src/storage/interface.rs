@@ -33,10 +33,10 @@ impl JulieDatabase{
 // Read will give back a default value in the tuple for the unselected database
 pub trait JulieStorage: Sized + Clone + Send {
     fn init(db: JulieDatabase) -> Result<Self, String>;
-    fn create(&self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
-    fn read(&self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>;
-    fn update(&self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
-    fn delete(&self, index: &str)-> Result<bool,String>;
+    fn create(&mut self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
+    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>;
+    fn update(&mut self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>;
+    fn delete(&mut self, index: &str)-> Result<bool,String>;
 }
 
 

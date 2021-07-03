@@ -10,7 +10,6 @@ a simple multi-factor authentication server, inspired by Kerberos.
 
 ### units
 
-
 ### ENSURE THE FOLLOWING TESTS ARE IGNORED IF YOU ARE RUNNING TESTS ON PROD:
 
 - src/auth/client/delete_all_clients

@@ -9,8 +9,8 @@ use crate::storage::sled::{SledDb};
 /// Build a warp http router to serve all julie service apis.
 #[instrument]
 pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    let client_storage = SledDb::init(JulieDatabase::Client).unwrap();
-    let service_storage = SledDb::init(JulieDatabase::Service).unwrap();
+    let mut client_storage = SledDb::init(JulieDatabase::Client).unwrap();
+    let mut service_storage = SledDb::init(JulieDatabase::Service).unwrap();
 
     let health = warp::path("julie")
         .and(warp::path("health"))
