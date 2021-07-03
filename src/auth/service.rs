@@ -48,146 +48,15 @@ impl ServiceIdentity {
         }
    
     }
-    /// Get ServiceIdentity structure using name
-    pub fn init(name: &str) -> Option<Self>{
-        let sid = match get_sid_from(name){
-            Some(sid)=>sid,
-            None=> return None
-        };
 
-        match ServiceIdentity::read(&sid){
-            Some(object)=> return Some(object),
-            None=> return None
-        };
 
-    }
-    /// Get a ServiceIdentity structure using uid
-    pub fn read(sid: &str) -> Option<Self> {
-        let root = database::get_root(database::SERVICE).unwrap();
-        let main_tree = database::get_tree(root.clone(), sid).unwrap();
-
-        // if this tree exists return it
-        if main_tree.contains_key(b"name").unwrap() {
-            root.flush().unwrap();
-            Some(ServiceIdentity {
-                sid: str::from_utf8(&main_tree.get(b"sid").unwrap().unwrap().to_vec())
-                    .unwrap()
-                    .to_string(),
-                name: str::from_utf8(&main_tree.get(b"name").unwrap().unwrap().to_vec())
-                    .unwrap()
-                    .to_string(),
-                shared_secret: str::from_utf8(&main_tree.get(b"shared_secret").unwrap().unwrap().to_vec())
-                    .unwrap()
-                    .to_string(),
-            })
-        } else {
-            root.drop_tree(&main_tree.name()).unwrap();
-            root.flush().unwrap();
-            None
-        }
-    }
-    pub fn update_shared_secert(&self, shared_secret: &str) -> Self {
-        let root = database::get_root(database::SERVICE).unwrap();
-        let main_tree = database::get_tree(root, &self.clone().sid).unwrap();
-    
-        main_tree.insert(b"shared_secret", shared_secret.as_bytes()).unwrap();
-        main_tree.flush().unwrap();
-        let mut updated = self.clone();
-        updated.shared_secret = shared_secret.to_string();
-        updated.clone()
-    
-    }
- 
- 
-    pub fn delete(&self)->bool{
-    
-        let root = database::get_root(database::SERVICE).unwrap();
-        // println!("{:?}", str::from_utf8(&main_tree.name()).unwrap());
-        // println!("{:?}", str::from_utf8(&apikey_tree.name()).unwrap());
-        let main_tree = database::get_tree(root.clone(), &self.clone().sid).unwrap();
-        let name_tree = database::get_tree(root.clone(), &self.clone().name).unwrap();
-
-        main_tree.clear().unwrap();
-        main_tree.flush().unwrap();
-        root.drop_tree(&main_tree.name()).unwrap();
-        name_tree.clear().unwrap();
-        name_tree.flush().unwrap();
-        root.drop_tree(&name_tree.name()).unwrap();
-
-        root.flush().unwrap();
-
-        true
-
+    pub fn issue_token(&self, service: ServiceIdentity)->Option<String>{
+        let token = jwt::issue(self.uid.to_string(), service.shared_secret, service.name, "Will be a comma separated list of auth methods.".to_string());
+        Some(token)
     }
 
 }
-
-/// All methods use sid as the primary index. Incase only an name is presented, the sod index can be retrieved with this function.
-fn get_sid_from(name: &str) -> Option<String> {
-    let root = database::get_root(database::SERVICE).unwrap();
-    let name_tree = database::get_tree(root.clone(), name).unwrap();
-
-    if name_tree.contains_key(b"sid").unwrap() {
-       Some(str::from_utf8(&name_tree.get(b"sid").unwrap().unwrap().to_vec()).unwrap().to_string())
-    } else {
-        root.drop_tree(&name_tree.name()).unwrap();
-        None
-    }
-
-}
-
-/// Retrives all tree indexes in a db
-pub fn _get_sid_indexes() -> Vec<String>{
-    let root = database::get_root(database::SERVICE).unwrap();
-    let mut uids: Vec<String> = [].to_vec();
-    for key in root.tree_names().iter() {
-        let uid = str::from_utf8(key).unwrap();
-        if uid.starts_with("s5sid"){
-            uids.push(uid.to_string());
-        }
-        else{
-
-        };
-    }
-    uids
-}
-/// Retrives all tree indexes in a db
-pub fn get_name_indexes() -> Vec<String>{
-    let root = database::get_root(database::SERVICE).unwrap();
-    let mut names: Vec<String> = [].to_vec();
-    for key in root.tree_names().iter() {
-        let name = str::from_utf8(key).unwrap();
-        if !name.starts_with("s5sid") && name != "__sled__default"{
-            names.push(name.to_string());
-        }
-        else{
-
-        };
-    }
-    names
-}
-/// Removes all trees in a db. Careful with that axe, Eugene.
-pub fn _remove_service_trees() -> bool {
-    let root = database::get_root(database::SERVICE).unwrap();
-    for key in root.tree_names().iter() {
-        let index = str::from_utf8(key).unwrap();
-        let tree = database::get_tree(root.clone(),index).unwrap();
-        // println!("Name: {:?}",str::from_utf8(&tree.name()).unwrap());
-        tree.clear().unwrap();
-        tree.flush().unwrap();
-        if str::from_utf8(&tree.name()).unwrap() != "__sled__default" {
-            root.drop_tree(&tree.name()).unwrap();
-        }
-        else{
-
-        }
-
-    }
-    root.flush().unwrap();
-
-    true
-}
-
+// WARNING BREKAING VERSION
 #[cfg(test)]
 mod tests {
     use super::*;
