@@ -1,12 +1,15 @@
 use serde_derive::{Deserialize, Serialize};
 use std::str;
 
+use crate::storage::sled::{SledDb};
+use crate::storage::interface::JulieClientStorage;
+
 // use tracing::instrument;
 
 use crate::auth::client::{AuthFactor, ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
-use crate::auth::core;
+use crate::auth::controller;
 use crate::lib::error::S5ErrorKind;
 use crate::lib::server;
 
@@ -51,9 +54,9 @@ pub async fn handle_put_basic(
     apikey: String,
     auth_basic: AuthBasic,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    
+    let storage = SledDb::init().unwrap();
     let client = filter_apikey(apikey)?;
-    let _client = core::update_basic_auth(client, &auth_basic.username, &auth_basic.pass256);
+    let _client = controller::update_basic_auth(storage, client, &auth_basic.username, &auth_basic.pass256);
     Ok(server::handle_response(warp::reply::json(&auth_basic)).await)
 }
 
@@ -62,22 +65,23 @@ pub async fn handle_put_email(
     apikey: String,
     auth_email: AuthEmail,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    
+    let mut storage = SledDb::init().unwrap();
     let client = filter_apikey(apikey)?;
-    let _client = core::update_email(client, &auth_email.email);
+    let _client = controller::update_email(storage,client, &auth_email.email);
     Ok(server::handle_response(warp::reply::json(&auth_email)).await)
 }
 /// Handle a warp http request to handle email auth callback.
 pub async fn handle_post_email_callback(
     callback_query: EmailCallbackQuery
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    
-    let client = match ClientAuth::init(&callback_query.uid){
-        Some(client)=>client,
-        None=>return Err(warp::reject::custom(S5ErrorKind::UID))
+    let mut storage = SledDb::init().unwrap();
+
+    let client = match storage.read(&callback_query.uid){
+        Ok(client)=>client,
+        Err(_)=>return Err(warp::reject::custom(S5ErrorKind::UID))
     };
 
-    if core::verify_email_token(client,callback_query.token){
+    if client.verify_email_token(callback_query.token){
         let verify = TotpEstablished {
             status: true,
         };
@@ -94,17 +98,20 @@ pub async fn handle_put_pubkey(
     encoded_basic: String,
     auth_pubkey: AuthPublicKey,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let mut storage = SledDb::init().unwrap();
+
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic)?;
-    let _client = core::update_public_key(client, &auth_pubkey.public_key);
+    let _client = controller::update_public_key(storage,client, &auth_pubkey.public_key);
     Ok(server::handle_response(warp::reply::json(&auth_pubkey)).await)
 }
 /// Handle a warp http request to get a totp_key.
 pub async fn handle_get_totp_key(
     client: Result<ClientAuth, warp::Rejection>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let storage = SledDb::init().unwrap();
     let client = client?;
-    let client = core::update_totp_key(client).unwrap();
+    let client = controller::update_totp_key(storage,client).unwrap();
     Ok(server::handle_response(warp::reply::json(&client)).await)
 }
 /// Handle a warp http request to post an otp to establish a totp_key.
@@ -114,7 +121,7 @@ pub async fn handle_post_totp(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let client = client?;
     let verify = TotpEstablished {
-        status: core::verify_totp(client.clone(), otp),
+        status: client.verify_totp(otp),
     };
 
     Ok(server::handle_response(warp::reply::json(&verify)).await)
@@ -127,14 +134,15 @@ pub async fn handle_get_token(
     timestamp: u64,
     service: ServiceQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic);
     let client = filter_signature(client, signature, timestamp)?;
     
     match ServiceIdentity::init(&service.clone().service){
-        Some(_)=>{
+        Some(service_identity)=>{
             let token = AuthToken {
-                token: core::issue_token(client, &service.service).unwrap(),
+                token: client.issue_token(service_identity).unwrap(),
             };
         
             Ok(server::handle_response(warp::reply::json(&token)).await)
@@ -147,13 +155,17 @@ pub async fn handle_get_token(
 
 }
 
-/// A warp filter for apikey auth
+/// A warp filter for apikey auth UIDDD
+/// /// FIIIXXXXX THISSS
 pub fn filter_apikey(key: String) -> Result<ClientAuth, warp::Rejection> {
-    let client = match core::verify_apikey(&key) {
-        Some(client) => client,
-        None => return Err(warp::reject::custom(S5ErrorKind::ApiKey)),
-    };
-    Ok(client)
+    let uid = "temp".to_string();
+    let mut storage = SledDb::init().unwrap();
+    let client = storage.read(&uid).unwrap();
+    if client.verify_apikey(&uid, &key) {
+        Ok(client)  
+    }else{
+        Err(warp::reject::custom(S5ErrorKind::ApiKey))
+    }
 }
 /// A warp filter for basic auth
 pub fn filter_basic_auth(
@@ -162,7 +174,7 @@ pub fn filter_basic_auth(
 ) -> Result<ClientAuth, warp::Rejection> {
     let client = client?;
     let trimmed = basic_auth_encoded.replace("Basic ", "");
-    let status = core::verify_basic_auth(client.clone(), trimmed);
+    let status = client.verify_basic_auth(trimmed);
 
     if status {
         Ok(client)
@@ -180,7 +192,7 @@ pub fn filter_signature(
     let message = "timestamp=".to_string() + &timestamp.to_string();
     let mut verify = true;
     if client.factors.contains(&AuthFactor::Signature) || client.factors.contains(&AuthFactor::All) {
-        verify = core::verify_signature(client.clone(), &message, &signature);
+        verify = client.verify_signature( &message, &signature);
     }
 
     if verify {
@@ -197,7 +209,7 @@ pub fn filter_totp(
     let client = client?;
     let mut verify = true;
     if client.factors.contains(&AuthFactor::Totp) || client.factors.contains(&AuthFactor::All) {
-        verify = core::verify_totp(client.clone(), otp);
+        verify = client.verify_totp(otp);
     }
     if verify {
         Ok(client)

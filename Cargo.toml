@@ -9,9 +9,9 @@ description = "Multi-factor authentication server; inspired by Kerberos."
 name = "jd"
 path = "src/daemon.rs"
 
-[[bin]]
-name = "jc"
-path = "src/cli.rs"
+# [[bin]]
+# name = "jc"
+# path = "src/cli.rs"
 
 [dependencies]
 serde = "1.0.112"
