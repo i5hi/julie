@@ -1,9 +1,8 @@
 
 use sled::{Db, Tree};
 use crate::storage::interface::{JulieStorage, JulieDatabase};
-use crate::auth::client::{ClientAuth,AuthUpdate,AuthFactor};
+use crate::auth::client::{ClientAuth,AuthFactor};
 use crate::auth::service::{ServiceIdentity};
-use std::marker::Copy;
 
 use std::env;
 use serde::{Deserialize, Serialize};
@@ -288,7 +287,7 @@ mod tests {
         //     db: "client".to_string()
         // };
         // println!("{:?}",config);
-        let mut root = SledDb::init(JulieDatabase::Client).unwrap();
+        let root = SledDb::init(JulieDatabase::Client).unwrap();
         let new_client = ClientAuth::new();
         let status = root.create(JulieDatabase::Client, (new_client.clone(), ServiceIdentity::dummy())).unwrap();
         assert!(status);
