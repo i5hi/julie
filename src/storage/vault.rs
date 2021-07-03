@@ -17,6 +17,7 @@ impl Clone for VaultStorage{
     }
 }
 
+// HACK ME :) 
 const VAULT_ADDRESS: &str = "https://vault.stackmate.net";
 const VAULT_CLIENT_TOKEN: &str = "s.VPBmiWlrlHHv0K3xsEf0yPuw";
 const VAULT_SERVICE_TOKEN: &str = "s.VeZgZEpErKmR1eyRHywJnD57";
