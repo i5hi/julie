@@ -7,6 +7,7 @@ CTJSON="Content-type: application/json"
 ACKJSON="Accept: application/json"
 ACKURL="Accept: application/x-www-form-urlencoded"
 
+UID=
 APIKEY=fe19baf1fb422054ca6503d4fc783ec48fd3868f136466180d86c4d5514f081c
 
 function basic {
@@ -14,11 +15,12 @@ function basic {
     local email="vm@stackmate.in"
     local username=vmd
     local password=secret
+    local HUID="x-sats-uid:$UID"
     local HAPIKEY="x-sats-api-key:$APIKEY"
     local pass256=$(echo -n $password | sha256sum | rev | cut -c4- | rev)
     local payload="{ \"email\":\"$email\", \"username\":\"$username\", \"pass256\":\"$pass256\" }"
     # echo $payload
-    curl -s -H "$CTJSON" -H "$ACKJSON" -H "$HAPIKEY" -d "$payload" -X PUT "$url"
+    curl -s -H "$CTJSON" -H "$ACKJSON" -H "$HAPIKEY" -H "$HUID" -d "$payload" -X PUT "$url"
 }
 
 function pubkey {
@@ -29,12 +31,11 @@ function pubkey {
     local pass256=$(echo -n $password | sha256sum | rev | cut -c4- | rev)
     local basic_auth=$(echo -n "$username:$pass256" | base64 -w 0)
     # printf "\n$url\n"
-    local HAUTH="authorization: Basic $basic_auth"
+    local HUID="x-sats-uid:$UID"
     local HAPIKEY="x-sats-api-key: $APIKEY"
-    
     local payload="{ \"public_key\":\"$public_key\" }"
 #    echo $payload
-    curl -s -H "$CTJSON" -H "$ACKJSON" -H "$HAPIKEY" -H "$HAUTH" -d "$payload" -X PUT "$url"
+    curl -s -H "$CTJSON" -H "$ACKJSON" -H "$HAPIKEY" -H "$HUID" -d "$payload" -X PUT "$url"
 
 
 }
@@ -49,13 +50,12 @@ function token {
     local message="timestamp=$time"
     local basic_auth=$(echo -n "$username:$pass256" | base64 -w 0)
     local signature=$(echo -ne $message | openssl dgst -sha256 -sign $key_path | openssl base64 -A)
-  
+    local HUID="x-sats-uid:$UID"
     local HAUTH="Authorization: Basic $basic_auth"
-    local HAPIKEY="x-sats-api-key: $APIKEY"
     local HTS="x-sats-timestamp: $time"
     local HSIG="x-sats-client-signature: $signature"
  
-    curl -vv -s -H "$HAPIKEY" -H "$HAUTH" -H "$HSIG" -H "$HTS" -X GET "$url"
+    curl -s  -H "$HAUTH" -H "$HSIG" -H "$HUID" -H "$HTS" -X GET "$url"
 
 
 }

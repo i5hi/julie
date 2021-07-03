@@ -107,15 +107,7 @@ Contains all core modules and tools required by the `auth` module. Can be indepe
 
     - `sled`: SledDB implementation of the storage interface
 
-### priorities
-
-1. correct-tooling: 
-
-Our primary focus is on creating correct `lib` tools for all the provided authentication methods. This is the core of the project and also the easiest way to contribute as they are independently testable units.
-
-2. async-server: 
-
-We want to create a correct implementation of our chosen http server library (warp). async in rust is still new to us and we are certainly not using it as effectively as we could. Currently the `lib` and `auth/core` of the julie is not async, only `handlers` and `daemon.rs`.  
+    - `vault`: Hashicorp Vault implementation of the storage interface
 
 
 ### known bugs
