@@ -23,6 +23,7 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
     let put_basic = warp::path("julie")
         .and(warp::path("basic"))
         .and(warp::put())
+        .and(warp::header::<String>("x-sats-uid"))
         .and(warp::header::<String>("x-sats-api-key"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
@@ -33,12 +34,25 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
     let put_email = warp::path("julie")
         .and(warp::path("email"))
         .and(warp::put())
+        .and(warp::header::<String>("x-sats-uid"))
         .and(warp::header::<String>("x-sats-api-key"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(with_backend(client_storage.clone()))
         .and_then(dto::handle_put_email)
         .with(warp::trace::named("julie-put-email"));
+
+        
+    let put_pubkey = warp::path("julie")
+        .and(warp::path("pubkey"))
+        .and(warp::put())
+        .and(warp::header::<String>("x-sats-uid"))
+        .and(warp::header::<String>("x-sats-api-key"))
+        .and(warp::body::content_length_limit(1024 * 64))
+        .and(warp::body::json())
+        .and(with_backend(client_storage.clone()))
+        .and_then(dto::handle_put_pubkey)
+        .with(warp::trace::named("julie-put-pubkey"));
     
     // let post_email_callback = warp::path("julie")
     //     .and(warp::path("callback"))
@@ -47,24 +61,12 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
     //     .and(with_backend(client_storage.clone()))
     //     .and_then(dto::handle_post_email_callback)
     //     .with(warp::trace::named("julie-post-email-callback"));
-        
-    let put_pubkey = warp::path("julie")
-        .and(warp::path("pubkey"))
-        .and(warp::put())
-        .and(warp::header::<String>("x-sats-api-key"))
-        .and(warp::header::<String>("Authorization"))
-        .and(warp::body::content_length_limit(1024 * 64))
-        .and(warp::body::json())
-        .and(with_backend(client_storage.clone()))
-        .and_then(dto::handle_put_pubkey)
-        .with(warp::trace::named("julie-put-pubkey"));
-
 
     let get_token =warp::path("julie")
         .and(warp::path("token"))
         .and(warp::get())
-        .and(warp::header::<String>("x-sats-api-key"))
-        .and(warp::header::<String>("Authorization"))
+        .and(warp::header::<String>("x-sats-uid"))
+        .and(warp::header::<String>("authorization"))
         .and(warp::header::<String>("x-sats-client-signature"))
         .and(warp::header::<u64>("x-sats-timestamp"))
         .and(warp::query::<dto::ServiceQuery>())
