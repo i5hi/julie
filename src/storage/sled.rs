@@ -30,7 +30,7 @@ impl JulieStorage for SledDb {
             }
         }
     }
-    fn create(&mut self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String> {
+    fn create(&self, db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String> {
         match  db{
             JulieDatabase::Client=>{
                 let main_tree = get_tree(self.clone(), &object.0.uid).unwrap();
@@ -48,7 +48,7 @@ impl JulieStorage for SledDb {
         }
       
     }
-    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>{
+    fn read(&self,db: JulieDatabase, index: &str)-> Result<(ClientAuth,ServiceIdentity),String>{
         match db {
             JulieDatabase::Client=>{
                 match get_tree(self.clone(), index){
@@ -98,7 +98,7 @@ impl JulieStorage for SledDb {
         }
      
     }
-    fn update(&mut self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>{
+    fn update(&self,db: JulieDatabase, object: (ClientAuth,ServiceIdentity)) -> Result<bool, String>{
         match db {
             JulieDatabase::Client=>{
           
@@ -123,7 +123,7 @@ impl JulieStorage for SledDb {
      
 
     }
-    fn delete(&mut self, index: &str)-> Result<bool,String>{
+    fn delete(&self, index: &str)-> Result<bool,String>{
         let tree = get_tree(self.clone(), index).unwrap();
         tree.clear().unwrap();
         tree.flush().unwrap();
