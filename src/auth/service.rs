@@ -55,7 +55,7 @@ mod tests {
         // client asks admin to initialize a user account
         let shared_secret = aes::keygen(aes::Encoding::Hex);
 
-        let service_id = ServiceIdentity::new("satoshipay",&shared_secret);
+        let _service_id = ServiceIdentity::new("satoshipay",&shared_secret);
         // admin gives client this new client_auth with an apikey
 
     }

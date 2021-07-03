@@ -1,7 +1,7 @@
 use hashicorp_vault::*;
 
 use crate::storage::interface::{JulieStorage, JulieDatabase};
-use crate::auth::client::{ClientAuth,AuthFactor};
+use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
 pub struct VaultStorage{

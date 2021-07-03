@@ -1,6 +1,5 @@
 use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
-use serde::{Serialize, Deserialize};
 
 use std::marker::Sized;
 

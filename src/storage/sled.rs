@@ -1,7 +1,7 @@
 
 use sled::{Db, Tree};
 use crate::storage::interface::{JulieStorage, JulieDatabase};
-use crate::auth::client::{ClientAuth,AuthFactor};
+use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
 use std::env;

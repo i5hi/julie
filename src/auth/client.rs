@@ -176,12 +176,12 @@ impl ClientAuth {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lib::hash::{sha256,salted512};
+    use crate::lib::hash::{sha256};
 
     #[test]
     fn client_composite() {
         // client asks admin to initialize a user account
-        let client_auth = ClientAuth::new();
+        let _client_auth = ClientAuth::new();
         // admin gives client this new client_auth with an apikey
     
         // client then registers a username and password
@@ -202,7 +202,7 @@ mod tests {
     
         // println!("{:#?}",client_auth.clone());
 
-        let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
+        let _public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
 
 
     }
