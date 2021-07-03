@@ -55,12 +55,7 @@ bash auth_signer.bash
 ## build
 
 ```bash
-cargo build --release
-cd target/release/
-strip jd
-strip jc
-cp jd /usr/bin
-cp jc /usr/bin
+bash build.sh
 
 # start the server
 jd
