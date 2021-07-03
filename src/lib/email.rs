@@ -6,7 +6,6 @@ use std::io::prelude::*;
 use lettre::{Message, Transport, SmtpTransport};
 use lettre::message::{MultiPart};
 
-use crate::lib::database::STORAGE_ROOT;
 
 const JULIE_EMAIL: &str = "admin@test.satswala.com";
 
@@ -31,7 +30,7 @@ pub fn send(to: &str, alias: &str, message: &str)->bool{
 }
 
 pub fn read_html()->String{
-    let config_file = format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, "email.html");
+    let config_file = format!("{}/{}/{}", env::var("HOME").unwrap(), ".julie", "email.html");
     let mut file = File::open(config_file).unwrap();
     let mut data = String::new();
     file.read_to_string(&mut data).unwrap();

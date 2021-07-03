@@ -9,7 +9,6 @@ use std::env;
 use tracing_subscriber::fmt::format::FmtSpan;
 // use std::net::{SocketAddr};
 use tracing_appender;
-use crate::lib::database::STORAGE_ROOT;
 
 #[tokio::main]
 async fn main() {
@@ -18,7 +17,7 @@ async fn main() {
     // JSON doesnt read right
     // let mut _address = SocketAddr::from_str("127.0.0.1").unwrap();
     // address.set_port("3030".parse::<u16>().unwrap());
-    let root_dir = format!("{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT);
+    let root_dir = format!("{}/{}", env::var("HOME").unwrap(), ".julie");
 
     let file_appender = tracing_appender::rolling::hourly(root_dir, "daemon.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);

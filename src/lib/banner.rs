@@ -1,11 +1,10 @@
 use bat::PrettyPrinter;
 use std::env;
 
-use crate::lib::database::STORAGE_ROOT;
 
 pub fn print(){
 
-    let banner_file = format!("{}/{}/{}", env::var("HOME").unwrap(), STORAGE_ROOT, "banner.ascii");
+    let banner_file = format!("{}/{}/{}", env::var("HOME").unwrap(), ".julie", "banner.ascii");
     let b = std::path::Path::new(&banner_file.clone()).exists();
     if b {
         PrettyPrinter::new()

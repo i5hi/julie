@@ -3,7 +3,6 @@ use crate::lib::hash;
 use crate::lib::rsa;
 
 use crate::lib::totp;
-use crate::lib::jwt;
 use crate::lib::email;
 use oath::{HashType};
 use std::time::SystemTime;
@@ -117,6 +116,7 @@ impl ClientAuth {
             false
         }
     }
+    
     pub fn verify_basic_auth(&self, basic_auth_encoded: String)->bool{
         let decoded_auth = str::from_utf8(&base64::decode(&basic_auth_encoded).unwrap())
             .unwrap()
@@ -173,70 +173,39 @@ impl ClientAuth {
 }
 
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::lib::hash::{sha256,salted512};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lib::hash::{sha256,salted512};
 
-//     #[test]
-//     fn client_composite() {
-//         // client asks admin to initialize a user account
-//         let client_auth = ClientAuth::new();
-//         // admin gives client this new client_auth with an apikey
-//         let indexes = get_uid_indexes();
-//         println!("#Clients: {}", indexes.len());
-//         println!("{:?}", indexes);
-
-//         // client then registers a username and password
-//         let username = "vmd";
-//         let password = "secret";
-//         // user must hash password
-//         let p256 = sha256(password);
-//         let pass256_expected =
-//             "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b".to_string();
-        
-//         assert_eq!(p256.clone(), pass256_expected.clone());
-
-//         // user must encode username:pass256 in base64
-//         let encoded = base64::encode(format!("{}:{}",username.clone(),p256.clone()).as_bytes());
-//         let encoded_expected = "dm1kOjJiYjgwZDUzN2IxZGEzZTM4YmQzMDM2MWFhODU1Njg2YmRlMGVhY2Q3MTYyZmVmNmEyNWZlOTdiZjUyN2EyNWI=";
-
-//         assert_eq!(encoded.clone(),encoded_expected.clone());
+    #[test]
+    fn client_composite() {
+        // client asks admin to initialize a user account
+        let client_auth = ClientAuth::new();
+        // admin gives client this new client_auth with an apikey
     
-//         // println!("{:#?}",client_auth.clone());
-//         assert!(client_auth.clone().update(AuthUpdate::Username,username));
-//         assert!(client_auth.clone().update(AuthUpdate::P512,&salted512(&p256,&client_auth.clone().salt)));
-//         assert!(client_auth.clone().update(AuthUpdate::Factors,AuthFactor::Basic.as_str()));
-
-//         let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
-//         assert!(client_auth.clone().update(AuthUpdate::PublicKey,&public_key));
-//         assert!(client_auth.clone().update(AuthUpdate::Factors,AuthFactor::Signature.as_str()));
-
-
-//         let read_client = ClientAuth::read(&client_auth.clone().uid).unwrap();
-//         // println!("{:#?}", read_client.clone());
-
-//         assert_eq!(
-//             get_uid_from(&read_client.clone().apikey).unwrap(),
-//             read_client.clone().uid
-//         );
-//         // assert_eq!(read_client.clone().delete(),true);
+        // client then registers a username and password
+        let username = "vmd";
+        let password = "secret";
+        // user must hash password
+        let p256 = sha256(password);
+        let pass256_expected =
+            "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b".to_string();
         
-//         println!("{:#?}", read_client.clone());
-   
-//         read_client.delete();
-//         let delete_status = match ClientAuth::read(&read_client.uid){
-//             Some(item)=>{
-//                 println!("{:?}",item);
-//                 false
-//             },
-//             None=>true
-//         };
+        assert_eq!(p256.clone(), pass256_expected.clone());
 
-//         assert!(delete_status);
-//     }
-//     // Careful with that axe, Eugene
-//     /// This must always be ignored on master or it will delete all your stuff    
+        // user must encode username:pass256 in base64
+        let encoded = base64::encode(format!("{}:{}",username.clone(),p256.clone()).as_bytes());
+        let encoded_expected = "dm1kOjJiYjgwZDUzN2IxZGEzZTM4YmQzMDM2MWFhODU1Njg2YmRlMGVhY2Q3MTYyZmVmNmEyNWZlOTdiZjUyN2EyNWI=";
+
+        assert_eq!(encoded.clone(),encoded_expected.clone());
+    
+        // println!("{:#?}",client_auth.clone());
+
+        let public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuvzpR/gruC+W/JAy7amw\nchCOaM7U/pUuMLy6JcE+Y8GTtbVqUi8MX+JeJOdEa/H6o2v99lJtUfYFdpU5cman\nfn38h7bDSw+EsqPFgmO4RrASTHiPJ+s8FU/3SbV5tguSBTOEmbiTc5x0IAAmlrLs\nAwUHEypz9ug+OIWQt0YAoYBfApTq8rV+TaYe5NxL2hbtFKZemcIGxfn3mgn6B2Rs\nZeOOnCB661MXBYPJl2+j2HwbF3pWHZZUCXKB7t5krPJScAlEFAZsDCR4Gkzu0tF/\nm+F7cId3sTBGX2Ci1FrqctfXbfzLv2BTIbKg+4YyCgX3Hr+XfqI4tEuGK7wb3zMg\nBmr7d6Kuwf5VHDIBifu31vZ6w2Z6JzUFpeL7FJGeFjEZ4xk+mvVdG9uC3W9vYrcR\nHZ1CMllMGDs+8Y6BVdYFgFwYt/ht53vij4psSXIewdiBignUSiuC5BGRUpEtNhJq\niKDsHZmjtCwsscP+XhaBwALLI7JFvdq8ELMP4SwxFILGbWmArs9+lOfavnux3zf/\nyWKt5OcKmZL/Ns2o46+Q5PIIMU53XyMSuDXz70QKib9yNRswJj/lMX/+j1JiprHw\nMW3UiFMz45QJ7FFAGsN542GNXQhKQ9Z86rwUT04GQ5ArlUO1PnhIWFZaYrCoogYS\n1tpQMyInFq8zBypTJnh5iTUCAwEAAQ==\n-----END PUBLIC KEY-----";
+
+
+    }
+
  
- 
-// }
+}

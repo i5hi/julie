@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::str;
 
 use crate::storage::sled::{SledDb};
-use crate::storage::interface::JulieClientStorage;
+use crate::storage::interface::{JulieStorage,JulieDatabase};
 
 // use tracing::instrument;
 
@@ -24,7 +24,7 @@ pub struct AuthEmail {
 }
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ServiceQuery {
-    service: String,
+    name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -54,7 +54,7 @@ pub async fn handle_put_basic(
     apikey: String,
     auth_basic: AuthBasic,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let storage = SledDb::init().unwrap();
+    let storage = SledDb::init(JulieDatabase::Client).unwrap();
     let client = filter_apikey(apikey)?;
     let _client = controller::update_basic_auth(storage, client, &auth_basic.username, &auth_basic.pass256);
     Ok(server::handle_response(warp::reply::json(&auth_basic)).await)
@@ -65,7 +65,7 @@ pub async fn handle_put_email(
     apikey: String,
     auth_email: AuthEmail,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let mut storage = SledDb::init().unwrap();
+    let mut storage = SledDb::init(JulieDatabase::Client).unwrap();
     let client = filter_apikey(apikey)?;
     let _client = controller::update_email(storage,client, &auth_email.email);
     Ok(server::handle_response(warp::reply::json(&auth_email)).await)
@@ -74,10 +74,10 @@ pub async fn handle_put_email(
 pub async fn handle_post_email_callback(
     callback_query: EmailCallbackQuery
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let mut storage = SledDb::init().unwrap();
+    let mut storage = SledDb::init(JulieDatabase::Client).unwrap();
 
-    let client = match storage.read(&callback_query.uid){
-        Ok(client)=>client,
+    let client = match storage.read(JulieDatabase::Client, &callback_query.uid){
+        Ok(result)=>result.0,
         Err(_)=>return Err(warp::reject::custom(S5ErrorKind::UID))
     };
 
@@ -98,7 +98,7 @@ pub async fn handle_put_pubkey(
     encoded_basic: String,
     auth_pubkey: AuthPublicKey,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let mut storage = SledDb::init().unwrap();
+    let mut storage = SledDb::init(JulieDatabase::Client).unwrap();
 
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic)?;
@@ -109,7 +109,7 @@ pub async fn handle_put_pubkey(
 pub async fn handle_get_totp_key(
     client: Result<ClientAuth, warp::Rejection>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let storage = SledDb::init().unwrap();
+    let storage = SledDb::init(JulieDatabase::Client).unwrap();
     let client = client?;
     let client = controller::update_totp_key(storage,client).unwrap();
     Ok(server::handle_response(warp::reply::json(&client)).await)
@@ -134,21 +134,21 @@ pub async fn handle_get_token(
     timestamp: u64,
     service: ServiceQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-
+  
     let client = filter_apikey(apikey);
     let client = filter_basic_auth(client, encoded_basic);
     let client = filter_signature(client, signature, timestamp)?;
-    
-    match ServiceIdentity::init(&service.clone().service){
-        Some(service_identity)=>{
+    let mut storage = SledDb::init(JulieDatabase::Service).unwrap();
+    match storage.read(JulieDatabase::Service, &service.clone().name){
+        Ok(result)=>{
             let token = AuthToken {
-                token: client.issue_token(service_identity).unwrap(),
+                token: result.1.issue_token(client.uid).unwrap(),
             };
         
             Ok(server::handle_response(warp::reply::json(&token)).await)
         },
-        None=>{
-            Err(warp::reject::custom(S5ErrorKind::BadServiceIdentity(service.clone().service)))
+        Err(_)=>{
+            Err(warp::reject::custom(S5ErrorKind::BadServiceIdentity(service.clone().name)))
         },
     }
 
@@ -159,8 +159,8 @@ pub async fn handle_get_token(
 /// /// FIIIXXXXX THISSS
 pub fn filter_apikey(key: String) -> Result<ClientAuth, warp::Rejection> {
     let uid = "temp".to_string();
-    let mut storage = SledDb::init().unwrap();
-    let client = storage.read(&uid).unwrap();
+    let mut storage = SledDb::init(JulieDatabase::Client).unwrap();
+    let client = storage.read(JulieDatabase::Client,&uid).unwrap().0;
     if client.verify_apikey(&uid, &key) {
         Ok(client)  
     }else{
