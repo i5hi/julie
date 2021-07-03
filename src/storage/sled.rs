@@ -5,8 +5,6 @@ use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
 use std::env;
-// use serde::{Deserialize, Serialize};
-// use std::str::FromStr;
 use std::str;
 
 pub const STORAGE_ROOT: &str = ".julie"; // Database
@@ -299,7 +297,7 @@ mod tests {
         let index = new_client.clone().uid;
         let mut client = match root.read(JulieDatabase::Client, &index).unwrap(){
             JulieDatabaseItem::Client(client)=>client,
-            JulieDatabaseItem::Service(service)=>{ClientAuth::new()},
+            JulieDatabaseItem::Service(_)=>{panic!("OH NO! HOW COULD YOU!?!?! :(")},
         };
         println!("{:#?}",client);
         let old_email = client.email;
@@ -307,7 +305,7 @@ mod tests {
         assert!(root.update(JulieDatabaseItem::Client(client.clone())).unwrap());
         let updated = match root.read(JulieDatabase::Client, &index).unwrap(){
             JulieDatabaseItem::Client(client)=>client,
-            JulieDatabaseItem::Service(service)=>{ClientAuth::new()},
+            JulieDatabaseItem::Service(_)=>{panic!("OH NO! HOW COULD YOU!?!?! :(")},
         };
         println!("{:?}",updated);
         assert_ne!(old_email,updated.email)

@@ -1,16 +1,17 @@
-use hashicorp_vault::*;
+use hashicorp_vault::client::{VaultClient,TokenData};
+use hashicorp_vault::client::error::{Result as VaultResult};
 
 use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem};
 use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
 pub struct VaultStorage{
-    http_client: hashicorp_vault::client::VaultClient<hashicorp_vault::client::TokenData>
+    http_client: VaultClient<TokenData>
 }
 
 impl Clone for VaultStorage{
     fn clone(&self) -> Self {
-        let client  = hashicorp_vault::client::VaultClient::new(&self.http_client.host, &self.http_client.token).unwrap();
+        let client  = VaultClient::new(&self.http_client.host, &self.http_client.token).unwrap();
         VaultStorage {
             http_client: client
         }
@@ -25,7 +26,7 @@ const VAULT_SERVICE_TOKEN: &str = "s.VeZgZEpErKmR1eyRHywJnD57";
 impl JulieStorage for VaultStorage{
     fn init(db: JulieDatabase) -> std::result::Result<Self, String>{
         let mut client = VaultStorage {
-            http_client: hashicorp_vault::client::VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_CLIENT_TOKEN).unwrap()
+            http_client: VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_CLIENT_TOKEN).unwrap()
         };
         match db{
             JulieDatabase::Client=>{
@@ -38,7 +39,7 @@ impl JulieStorage for VaultStorage{
             }
         }
     }
-    fn create(&mut self, object: JulieDatabaseItem) -> std::result::Result<bool, String>{
+    fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>{
         match object{
             JulieDatabaseItem::Client(client)=>{
                 Ok(self.http_client.set_custom_secret(&client.uid,&client).is_ok())
@@ -49,10 +50,10 @@ impl JulieStorage for VaultStorage{
             }
         }
     }
-    fn read(&mut self,db: JulieDatabase, index: &str)-> std::result::Result<JulieDatabaseItem,String>{
+    fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>{
         match db{
             JulieDatabase::Client=>{
-                let secret: Result<ClientAuth> = self.http_client.get_custom_secret(index);
+                let secret: VaultResult<ClientAuth> = self.http_client.get_custom_secret(index);
                 if secret.is_ok() {
                     Ok(JulieDatabaseItem::Client(secret.unwrap()))
                 }
@@ -62,7 +63,7 @@ impl JulieStorage for VaultStorage{
 
             }
             JulieDatabase::Service=>{
-                let secret: Result<ServiceIdentity> = self.http_client.get_custom_secret(index);
+                let secret: VaultResult<ServiceIdentity> = self.http_client.get_custom_secret(index);
                 if secret.is_ok() {
                     Ok(JulieDatabaseItem::Service(secret.unwrap()))
 
@@ -73,7 +74,7 @@ impl JulieStorage for VaultStorage{
             }
         }
     }
-    fn update(&mut self, object: JulieDatabaseItem) -> std::result::Result<bool, String>{
+    fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>{
         match object{
             JulieDatabaseItem::Client(client)=>{
                 // let serialized = serde_json::to_string(&object.0).unwrap();
@@ -85,7 +86,7 @@ impl JulieStorage for VaultStorage{
             }
         }
     }
-    fn delete(&mut self, index: &str)-> std::result::Result<bool,String>{
+    fn delete(&mut self, index: &str)-> Result<bool,String>{
 
         Ok(self.http_client.delete_secret(index).is_ok())
          
@@ -106,7 +107,7 @@ mod tests {
         assert!(created);
         let read = match client_storage.read(JulieDatabase::Client,&client.clone().uid).unwrap(){
             JulieDatabaseItem::Client(client)=>client,
-            JulieDatabaseItem::Service(service)=>{ClientAuth::new()},
+            JulieDatabaseItem::Service(_)=>{panic!("OH NO!!! WHY DID YOU DO THIS??! :(")},
         };
         assert_eq!(read.clone().uid, client.clone().uid);
         assert_eq!(read.clone().apikey, client.clone().apikey);
