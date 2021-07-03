@@ -4,8 +4,6 @@ use warp::{self, Filter};
 use crate::lib::server;
 use crate::storage::interface::{JulieStorage};
 
-use std::thread;
-
 
 
 /// Build a warp http router to serve all julie service apis.
@@ -81,6 +79,6 @@ pub fn build() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
 }
 
 
-fn with_backend(storage: impl JulieStorage) -> impl Filter<Extract = (impl JulieStorage,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || storage.clone())
-}
+// fn with_backend(storage: impl JulieStorage) -> impl Filter<Extract = (impl JulieStorage,), Error = std::convert::Infallible> + Clone {
+//     warp::any().map(move || storage.clone())
+// }
