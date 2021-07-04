@@ -33,10 +33,10 @@ Then create these secret engines:
 
 ```bash
 
-vault secrets enable -path=julie/test/client kv
-# Success! Enabled the kv secrets engine at: julie/test/client/
-vault secrets enable -path=julie/test/service kv
-# Success! Enabled the kv secrets engine at: julie/test/service/
+vault secrets enable -path=julie-test-client kv
+# Success! Enabled the kv secrets engine at: julie-test-client
+vault secrets enable -path=julie-test-service kv
+# Success! Enabled the kv secrets engine at: julie-test-service
 ```
 
 Write the policies we created:
@@ -56,24 +56,26 @@ Issue tokens for each policy
 vault token create -policy=julie-test-client
 # Key                  Value
 # ---                  -----
-# token                s.3V26ZP5mVqH6ZeQsnjF0hflr
-# token_accessor       PKd7kspWNhJ08x7vEsXuqL7z
+# token                s.IvslwhG65dfQcRigKZ8iBPT6
+# token_accessor       u8CPidOfF6kTsyT1IjUWZkFj
 # token_duration       768h
 # token_renewable      true
-# token_policies       ["default", "julie-test-client"]
+# token_policies       ["default" "julie-test-client"]
 # identity_policies    []
-# policies             ["julie-test-client"]
+# policies             ["default" "julie-test-client"]
+
 
 vault token create -policy=julie-test-service
-# Key                  Value
-# ---                  -----
-# token                s.r3SU9DMv4sALWVhnZSREoMwN
-# token_accessor       qZcmW1KMIbUrxZ5AMtbxldXR
+#  Key                  Value
+#  ---                  -----
+# token                s.focBoVGrW0iUT7HxJa0qVdIm
+# token_accessor       8V0QBGFqRUAGqjvKqOLAotHH
 # token_duration       768h
 # token_renewable      true
-# token_policies       ["default", "julie-test-service"]
+# token_policies       ["default" "julie-test-service"]
 # identity_policies    []
-# policies             ["julie-test-service"]
+# policies             ["default" "julie-test-service"]
+
 
 ```
 

@@ -4,6 +4,7 @@ use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem};
 use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
+
 use std::env;
 use std::str;
 
@@ -14,13 +15,18 @@ pub struct SledConfig{
     db: String,
 }
 
-pub type SledDb = Db;
+#[derive(Debug,Clone)]
+pub struct SledDb{
+    db: Db
+}
 
 impl JulieStorage for SledDb {
-    fn init(db: JulieDatabase) -> Result<Self, String>{
+    fn init(db: JulieDatabase) -> Result<Self, String> where Self:Sized{
         match get_root(db){
             Ok(root)=>{
-                Ok(root)
+                Ok(SledDb{
+                    db:root
+                })
             },
             Err(e)=>{
                 Err(e)
@@ -33,7 +39,7 @@ impl JulieStorage for SledDb {
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String> {
         match  object{
             JulieDatabaseItem::Client(client)=>{
-                let main_tree = get_tree(self.clone(), &client.uid).unwrap();
+                let main_tree = get_tree(self.clone().db, &client.uid).unwrap();
                 // TODO!!! check if tree contains data, do not insert
 
                 let bytes = bincode::serialize(&client).unwrap();
@@ -42,7 +48,7 @@ impl JulieStorage for SledDb {
 
             }
             JulieDatabaseItem::Service(service)=>{
-                let main_tree = get_tree(self.clone(), &service.name).unwrap();
+                let main_tree = get_tree(self.clone().db, &service.name).unwrap();
                 // TODO !!! check if tree contains data, do not insert
                 let bytes = bincode::serialize(&service).unwrap();
                 main_tree.insert("service", bytes).unwrap();
@@ -54,7 +60,7 @@ impl JulieStorage for SledDb {
     fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>{
         match db {
             JulieDatabase::Client=>{
-                match get_tree(self.clone(), index){
+                match get_tree(self.clone().db, index){
                     Ok(tree)=>{
                          if tree.contains_key(b"client").unwrap() {
                              match tree.get("client").unwrap() {
@@ -65,7 +71,7 @@ impl JulieStorage for SledDb {
                                  None => Err("No client found in database - use uid as index".to_string()),
                              }
                          } else {
-                             self.drop_tree(&tree.name()).unwrap();
+                             self.db.drop_tree(&tree.name()).unwrap();
                              Err("No client found in database - use uid as index".to_string())
                          }
                     }
@@ -76,7 +82,7 @@ impl JulieStorage for SledDb {
 
             }
             JulieDatabase::Service=>{
-                match get_tree(self.clone(), index){
+                match get_tree(self.clone().db, index){
                     Ok(tree)=>{
                          // if this tree exists return it
                          if tree.contains_key(b"service").unwrap() {
@@ -88,7 +94,7 @@ impl JulieStorage for SledDb {
                                  None => Err("No service found in database - use name as index".to_string()),
                              }
                          } else {
-                             self.drop_tree(&tree.name()).unwrap();
+                             self.db.drop_tree(&tree.name()).unwrap();
                              Err("No service found in database - use name as index".to_string())
                          }
                     }
@@ -104,7 +110,7 @@ impl JulieStorage for SledDb {
         match object {
             JulieDatabaseItem::Client(client)=>{
           
-                let main_tree = get_tree(self.clone(), &client.clone().uid).unwrap();
+                let main_tree = get_tree(self.db.clone(), &client.clone().uid).unwrap();
         
                 let bytes = bincode::serialize(&client).unwrap();
         
@@ -113,7 +119,7 @@ impl JulieStorage for SledDb {
                 Ok(true)
             }
             JulieDatabaseItem::Service(service)=>{
-                let main_tree = get_tree(self.clone(), &service.clone().name).unwrap();
+                let main_tree = get_tree(self.db.clone(), &service.clone().name).unwrap();
         
                 let bytes = bincode::serialize(&service).unwrap();
         
@@ -125,11 +131,12 @@ impl JulieStorage for SledDb {
      
 
     }
-    fn delete(&mut self, index: &str)-> Result<bool,String>{
-        let tree = get_tree(self.clone(), index).unwrap();
+    fn delete(&mut self, db: JulieDatabase, index: &str)-> Result<bool,String>{
+        
+        let tree = get_tree(self.clone().db, index).unwrap();
         tree.clear().unwrap();
         tree.flush().unwrap();
-        self.drop_tree(&tree.name()).unwrap();
+        self.db.drop_tree(&tree.name()).unwrap();
     
         Ok(true)
 

@@ -9,10 +9,13 @@ use std::env;
 use tracing_subscriber::fmt::format::FmtSpan;
 // use std::net::{SocketAddr};
 use tracing_appender;
+use storage::interface::{StorageChoice};
 
 #[tokio::main]
 async fn main() {
     let _config = lib::config::JulieConfig::init();
+    let storage = StorageChoice::Vault;
+
     // println!("{:#?}",config.clone());
     // JSON doesnt read right
     // let mut _address = SocketAddr::from_str("127.0.0.1").unwrap();
@@ -28,6 +31,6 @@ async fn main() {
     
     tracing::info!(".[|julie mfa daemon|].");
     lib::banner::print();
-    warp::serve(auth::router::build()).run(([127,0,0,1],3030)).await
+    warp::serve(auth::router::build(storage)).run(([127,0,0,1],3030)).await
 }
 

@@ -3,7 +3,14 @@ use crate::auth::service::{ServiceIdentity};
 
 use std::marker::Sized;
 
+#[derive(Debug,Clone)]
+pub enum StorageChoice {
+    Sled,
+    Vault
+}
 
+
+#[derive(Debug,Clone)]
 pub enum JulieDatabase{
     Client,
     Service
@@ -31,12 +38,12 @@ pub enum JulieDatabaseItem{
 }
 
 
-pub trait JulieStorage: Sized + Clone + Send {
-    fn init(db: JulieDatabase) -> Result<Self, String>;
+pub trait JulieStorage: Sized + Clone + Send + std::fmt::Debug {
+    fn init(db: JulieDatabase) -> Result<Self, String> where Self : Sized;
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>;
     fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
-    fn delete(&mut self, index: &str)-> Result<bool,String>;
+    fn delete(&mut self,db: JulieDatabase, index: &str)-> Result<bool,String>;
 }
 
 

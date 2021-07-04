@@ -308,8 +308,8 @@ mod tests {
         println!("{:#?}",mfa_client.clone());
 
         // Comment out the following if you want a user to persist for bash testing
-        assert!(client_storage.delete(&mfa_client.uid).unwrap());
-        assert!(service_storage.delete(&service.clone().name).unwrap());
+        assert!(client_storage.delete(JulieDatabase::Client,&mfa_client.uid).unwrap());
+        assert!(service_storage.delete(JulieDatabase::Service,&service.clone().name).unwrap());
         ()
 
 

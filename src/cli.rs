@@ -6,16 +6,23 @@ mod lib;
 mod auth;
 mod storage;
 
+use crate::storage::interface::{JulieStorage,JulieDatabase,JulieDatabaseItem};
+// use crate::storage::sled::{SledDb};
+use crate::storage::vault::{VaultStorage};
+
 use crate::lib::aes;
 
 fn main() {
+    let client_storage = VaultStorage::init(JulieDatabase::Client).unwrap();
+    let mut service_storage = VaultStorage::init(JulieDatabase::Service).unwrap();
+
     let matches = App::new("\x1b[0;92mjc\x1b[0m")
         .about("\x1b[0;94mJulie admin tools.\x1b[0m")
         .version("\x1b[0;1m0.0.9\x1b[0m")
         .author("Stackmate.Network")
         .subcommand(
             App::new("info")
-                .about("Provides live stats on julie daemon.")
+                .about("Provide live stats on julie daemon.")
                 .display_order(0)
         )
         .subcommand(
@@ -24,16 +31,23 @@ fn main() {
                 .display_order(1)
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
-                    App::new("register").about("Registers a new client")
+                    App::new("register").about("Register a new client")
                 )
                 .subcommand(
-                    App::new("delete").about("Deletes and existing client")
+                    App::new("read").about("Read a client")
+                    .arg(
+                        Arg::with_name("uid")
+                        .required(true)
+                        .help("The uid of the client to read."),
+                ))
+                .subcommand(
+                    App::new("delete").about("Delete a client")
                     .arg(
                         Arg::with_name("uid")
                         .required(true)
                         .help("The uid of the client to delete."),
                 ))
-                .subcommand(App::new("list").about("Lists all existing client uids")),
+                .subcommand(App::new("list").about("List all existing client uids")),
 
         )
         .subcommand(
@@ -42,7 +56,7 @@ fn main() {
                 .display_order(1)
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
-                    App::new("register").about("Registers a new service")
+                    App::new("register").about("Register a new service")
                     .arg(
                         Arg::with_name("name")
                         .required(true)
@@ -55,15 +69,23 @@ fn main() {
                     )
                 )
                 .subcommand(
-                    App::new("delete").about("Deletes and existing service")
+                    App::new("read").about("Read a service")
                     .arg(
                         Arg::with_name("name")
                         .required(true)
-                        .help("The name of the client to delete."),
+                        .help("The name of the service to read."),
                     )
                 )
                 .subcommand(
-                    App::new("update").about("Updates an existing service shared secret key")
+                    App::new("delete").about("Delete a service")
+                    .arg(
+                        Arg::with_name("name")
+                        .required(true)
+                        .help("The name of the service to delete."),
+                    )
+                )
+                .subcommand(
+                    App::new("update").about("Update an existing service shared secret key")
                     .arg(
                         Arg::with_name("name")
                         .required(true)
@@ -75,7 +97,7 @@ fn main() {
                         .help("New key to update."),
                     )
                 )
-                .subcommand(App::new("list").about("Lists all existing service sids")),
+                .subcommand(App::new("list").about("List all existing service sids")),
 
         )
         .subcommand(
@@ -115,21 +137,36 @@ fn main() {
             match push_matches.subcommand() {
                 ("register", Some(_)) => {
                     let client = auth::client::ClientAuth::new();
+                    assert!(client_storage.clone().create(JulieDatabaseItem::Client(client.clone())).unwrap());
                     println!("{:#?}",client);
                 }
                 ("list", Some(_)) => {
-                    let clients = auth::client::get_uid_indexes();
-                    println!("{:#?}",clients);
+                    // let clients = auth::client::get_uid_indexes();
+                    println!("NOT IMPLEMENTED")
+                }
+                ("read", Some(args)) => {
+                    // let clients = auth::client::get_uid_indexes();
+                    println!("{:#?}", &args.clone().value_of("uid").unwrap());
+
+                    match client_storage.clone().read(JulieDatabase::Client,&args.value_of("uid").unwrap()){
+                        Ok(item)=>match item{
+                            JulieDatabaseItem::Client(client)=>{
+                                println!("{:#?}", client)
+                            }
+                            _=>{
+                                panic!("WEIRD ERROR - SHOULD NOT HAPPEN")
+
+                            }
+                        }
+                        Err(e)=>{
+                            println!("{}",e)
+                        }
+                    }
                 }
                 ("delete", Some(args)) => {
-                    match auth::client::ClientAuth::read(&args.value_of("uid").unwrap()){
-                        Some(client)=>{
-                            let status = client.delete();
-                            println!("{:#?}",status);
-                        }
-                        None=>println!("Provided UID is not registered.")
-                    };
-                    
+                    let status = client_storage.clone().delete(JulieDatabase::Client,&args.value_of("uid").unwrap()).unwrap();
+                    println!("{}",status)
+        
                 }
                 _ => unreachable!(),
             }
@@ -137,35 +174,58 @@ fn main() {
         ("service", Some(push_matches)) => {
             match push_matches.subcommand() {
                     ("register", Some(args)) => {
-                        let service = match auth::service::ServiceIdentity::init(&args.value_of("name").unwrap()){
-                            Some(service)=>service,
-                            None=>{
-                                auth::service::ServiceIdentity::new(&args.value_of("name").unwrap(),&args.value_of("key").unwrap())
+                        match service_storage.clone().read(JulieDatabase::Service,&args.value_of("name").unwrap()){
+                            Ok(item)=> match item{
+                                JulieDatabaseItem::Service(service)=>{
+                                    println!("Service {} exists.", service.name);
+
+                                }
+                                _=>{
+                                    panic!("WEIRD ERROR - SHOULD NOT HAPPEN");
+                                }
+                            }
+                            Err(_)=>{
+                                let service = auth::service::ServiceIdentity::new(&args.value_of("name").unwrap(),&args.value_of("key").unwrap());
+                                  
+                                match service_storage.create(JulieDatabaseItem::Service(service.clone())){
+                                    Ok(result)=> println!("{:#?}",result),
+                                    Err(e)=>println!("{:#?}",e)
+                                };
+
+                                  
                             }
                         };
-                        println!("{:#?}",service);
+                   
 
                         
                     }
                     ("list", Some(_)) => {
-                        let services = auth::service::get_name_indexes();
-                        println!("{:#?}",services);
+                        println!("NOT IMPLEMENTED")
+
+                    }                    
+                    ("update", Some(_)) => {
+                        println!("NOT IMPLEMENTED")
+
                     }
                     ("delete", Some(args)) => {
-                        match auth::service::ServiceIdentity::init(&args.value_of("name").unwrap()){
-                            Some(service)=>{
-                                let status = service.delete();
-                                println!("{:#?}",status);
-                            }
-                            None=>println!("Provided name is not registered.")
-                        };
+                        let status = service_storage.clone().delete(JulieDatabase::Service,&args.value_of("name").unwrap()).unwrap();
+                        println!("{}",status)
                         
                     }
-                    ("update", Some(args)) => {
-                        match auth::service::ServiceIdentity::init(&args.value_of("name").unwrap()){
-                            Some(service)=>println!("{:#?}",service.update_shared_secert(&args.value_of("key").unwrap())),
-                            None=>println!("Provided name is not registered.")
-                        };                      
+                    ("read", Some(args)) => {
+                        println!("{:#?}", &args.clone().value_of("name").unwrap());
+
+                        match service_storage.clone().read(JulieDatabase::Service,&args.value_of("name").unwrap()){
+                            Ok(item)=>match item{
+                                JulieDatabaseItem::Service(service)=>{
+                                    println!("{:#?}", service)
+                                }
+                                _=>panic!("WEIRD ERROR - SHOULD NOT HAPPEN")
+                            }
+                            Err(e)=>{
+                                println!("{}",e)
+                            }
+                        }                      
                         
                     }
                 _ => unreachable!(),
