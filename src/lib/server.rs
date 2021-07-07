@@ -7,7 +7,7 @@ use warp::{http::StatusCode, Rejection, Reply};
 #[instrument]
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
     let code;
-    let message;
+    let mut message;
 
     if err.is_not_found() {
         code = StatusCode::NOT_FOUND;
@@ -18,6 +18,15 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
     } else if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
         code = StatusCode::BAD_REQUEST;
         message = "Invalid Body";
+    }else if let Some(header) = err.find::<warp::reject::MissingHeader>() {
+        code = StatusCode::BAD_REQUEST;
+        message = header.name();
+    }else if let Some(header) = err.find::<warp::reject::InvalidHeader>() {
+        code = StatusCode::BAD_REQUEST;
+        message = header.name();
+    }else if let Some(_) = err.find::<warp::reject::PayloadTooLarge>() {
+        code = StatusCode::BAD_REQUEST;
+        message = "Payload Too Large";
     }
      else if let Some(e) = err.find::<S5ErrorKind>() {
         match e {
@@ -68,6 +77,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
             S5ErrorKind::Email => {
                 code = StatusCode::UNAUTHORIZED;
                 message = "Email token invalid or expired.";
+            }
+            S5ErrorKind::NotInDatabase => {
+                code = StatusCode::NOT_FOUND;
+                message = "Resource not found.";
             }
      
         }

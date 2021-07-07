@@ -25,6 +25,8 @@ pub enum S5ErrorKind{
     TotpKeyEstablished,
     #[error("!!!Internal Server Error!!!")]
     ServerError,
+    #[error("Resource not found!")]
+    NotInDatabase,
     #[error("JWT Sucks!")]
     JwtInvalid,
     #[error("JWT Expired!")]

@@ -1,7 +1,7 @@
 use hashicorp_vault::client::{VaultClient,TokenData};
 use hashicorp_vault::client::error::{Result as VaultResult};
 
-use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem};
+use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem, StorageBoxClone};
 use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
@@ -10,12 +10,14 @@ pub struct VaultStorage{
     http_client: VaultClient<TokenData>
 }
 
-impl Clone for VaultStorage{
-    fn clone(&self) -> Self {
+
+
+impl StorageBoxClone for VaultStorage{
+    fn clone_box(&self) -> Box<dyn JulieStorage> {
         let client  = VaultClient::new(&self.http_client.host, &self.http_client.token).unwrap();
-        VaultStorage {
+        Box::new(VaultStorage {
             http_client: client
-        }
+        })
     }
 }
 
@@ -25,23 +27,7 @@ const VAULT_CLIENT_TOKEN: &str = "s.IvslwhG65dfQcRigKZ8iBPT6";
 const VAULT_SERVICE_TOKEN: &str = "s.focBoVGrW0iUT7HxJa0qVdIm";
 
 impl JulieStorage for VaultStorage{
-    fn init(db: JulieDatabase) -> std::result::Result<Self, String> where Self:Sized{
-      
-        match db{
-            JulieDatabase::Client=>{
-                let mut storage = VaultStorage {
-                    http_client: VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_CLIENT_TOKEN).unwrap()
-                };
-                Ok(storage)
-            }
-            JulieDatabase::Service=>{
-                let mut storage = VaultStorage {
-                    http_client: VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_SERVICE_TOKEN).unwrap()
-                };
-                Ok(storage)
-            }
-        }
-    }
+
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>{
         match object{
             JulieDatabaseItem::Client(client)=>{
@@ -106,6 +92,23 @@ impl JulieStorage for VaultStorage{
     }
 }
 
+pub fn init(db: JulieDatabase) -> std::result::Result<impl JulieStorage, String> {
+      
+    match db{
+        JulieDatabase::Client=>{
+            let storage = VaultStorage {    
+                http_client: VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_CLIENT_TOKEN).unwrap()
+            };
+            Ok(storage)
+        }
+        JulieDatabase::Service=>{
+            let storage = VaultStorage {
+                http_client: VaultClient::new(VAULT_ADDRESS.to_string(), VAULT_SERVICE_TOKEN).unwrap()
+            };
+            Ok(storage)
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -114,7 +117,7 @@ mod tests {
 
     #[test]
     fn vault_implementation() {
-        let mut client_storage = VaultStorage::init(JulieDatabase::Client).unwrap();
+        let mut client_storage = init(JulieDatabase::Client).unwrap();
         let client = ClientAuth::new();
         let created = client_storage.create(JulieDatabaseItem::Client(client.clone())).unwrap();
         assert!(created);

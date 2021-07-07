@@ -1,6 +1,6 @@
 
 use sled::{Db, Tree};
-use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem};
+use crate::storage::interface::{JulieStorage, JulieDatabase, JulieDatabaseItem, StorageBoxClone};
 use crate::auth::client::{ClientAuth};
 use crate::auth::service::{ServiceIdentity};
 
@@ -15,31 +15,27 @@ pub struct SledConfig{
     db: String,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct SledDb{
     db: Db
 }
-
-impl JulieStorage for SledDb {
-    fn init(db: JulieDatabase) -> Result<Self, String> where Self:Sized{
-        match get_root(db){
-            Ok(root)=>{
-                Ok(SledDb{
-                    db:root
-                })
-            },
-            Err(e)=>{
-                Err(e)
-            }
-        }
+impl StorageBoxClone for SledDb{
+    fn clone_box(&self) -> Box<dyn JulieStorage> {
+        let client  = self.db.clone();
+        Box::new(SledDb {
+            db: client
+        })
     }
+}
+impl JulieStorage for SledDb {
+
     /// Client index = uid
     /// Service index = name
 
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String> {
         match  object{
             JulieDatabaseItem::Client(client)=>{
-                let main_tree = get_tree(self.clone().db, &client.uid).unwrap();
+                let main_tree = get_tree(self.db.clone(), &client.uid).unwrap();
                 // TODO!!! check if tree contains data, do not insert
 
                 let bytes = bincode::serialize(&client).unwrap();
@@ -48,7 +44,7 @@ impl JulieStorage for SledDb {
 
             }
             JulieDatabaseItem::Service(service)=>{
-                let main_tree = get_tree(self.clone().db, &service.name).unwrap();
+                let main_tree = get_tree(self.db.clone(), &service.name).unwrap();
                 // TODO !!! check if tree contains data, do not insert
                 let bytes = bincode::serialize(&service).unwrap();
                 main_tree.insert("service", bytes).unwrap();
@@ -60,7 +56,7 @@ impl JulieStorage for SledDb {
     fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>{
         match db {
             JulieDatabase::Client=>{
-                match get_tree(self.clone().db, index){
+                match get_tree(self.db.clone(), index){
                     Ok(tree)=>{
                          if tree.contains_key(b"client").unwrap() {
                              match tree.get("client").unwrap() {
@@ -82,7 +78,7 @@ impl JulieStorage for SledDb {
 
             }
             JulieDatabase::Service=>{
-                match get_tree(self.clone().db, index){
+                match get_tree(self.db.clone(), index){
                     Ok(tree)=>{
                          // if this tree exists return it
                          if tree.contains_key(b"service").unwrap() {
@@ -133,7 +129,7 @@ impl JulieStorage for SledDb {
     }
     fn delete(&mut self, db: JulieDatabase, index: &str)-> Result<bool,String>{
         
-        let tree = get_tree(self.clone().db, index).unwrap();
+        let tree = get_tree(self.db.clone(), index).unwrap();
         tree.clear().unwrap();
         tree.flush().unwrap();
         self.db.drop_tree(&tree.name()).unwrap();
@@ -143,7 +139,18 @@ impl JulieStorage for SledDb {
     }
 }
 
-
+pub fn init(db: JulieDatabase) -> Result<impl JulieStorage, String>{
+    match get_root(db){
+        Ok(root)=>{
+            Ok(SledDb{
+                db:root
+            })
+        },
+        Err(e)=>{
+            Err(e)
+        }
+    }
+}
 /// Retrieves the primary data store @ $HOME/.julie/$db.
 fn get_root(db: JulieDatabase) -> Result<Db, String> {
     let db_storage_path: String =
@@ -161,7 +168,7 @@ fn get_root(db: JulieDatabase) -> Result<Db, String> {
 /// Client index is uid.
 /// Service index is name.
 fn get_tree(root: Db, index: &str) -> Result<Tree, String> {
-    match root.open_tree(index.clone().as_bytes()) {
+    match root.open_tree(index.as_bytes()) {
         Ok(tree) => Ok(tree),
         Err(_) => Err(format!("E:Tree Open @ {} FAILED.", index).to_string()),
     }
@@ -297,7 +304,7 @@ mod tests {
         //     db: "client".to_string()
         // };
         // println!("{:?}",config);
-        let mut root = SledDb::init(JulieDatabase::Client).unwrap();
+        let mut root = init(JulieDatabase::Client).unwrap();
         let new_client = ClientAuth::new();
         let status = root.create(JulieDatabaseItem::Client(new_client.clone())).unwrap();
         assert!(status);

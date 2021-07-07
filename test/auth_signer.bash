@@ -1,21 +1,21 @@
 #!/bin/bash
 
 HOST="localhost:3030"
-AUTH="/auth"
+AUTH="/julie"
 
 CTJSON="Content-type: application/json"
 ACKJSON="Accept: application/json"
 ACKURL="Accept: application/x-www-form-urlencoded"
 
-UID=
-APIKEY=fe19baf1fb422054ca6503d4fc783ec48fd3868f136466180d86c4d5514f081c
+S5UID=""
+APIKEY="159af31b3810f9c9b3216278fb3e53c6d32bd99a3b1fc779d5cc2fbcadd7c746"
 
 function basic {
     local url="$HOST$AUTH/basic"
     local email="vm@stackmate.in"
     local username=vmd
     local password=secret
-    local HUID="x-sats-uid:$UID"
+    local HUID="x-sats-uid:$S5UID"
     local HAPIKEY="x-sats-api-key:$APIKEY"
     local pass256=$(echo -n $password | sha256sum | rev | cut -c4- | rev)
     local payload="{ \"email\":\"$email\", \"username\":\"$username\", \"pass256\":\"$pass256\" }"
@@ -63,8 +63,8 @@ function token {
 
 basic
 printf "\n"
-pubkey
-printf "\n"
-token
-printf "\n"
+#pubkey
+#printf "\n"
+#token
+#printf "\n"
 

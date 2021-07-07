@@ -38,12 +38,31 @@ pub enum JulieDatabaseItem{
 }
 
 
-pub trait JulieStorage: Sized + Clone + Send + std::fmt::Debug {
-    fn init(db: JulieDatabase) -> Result<Self, String> where Self : Sized;
+pub trait JulieStorage: Send + std::fmt::Debug + StorageBoxClone + std::marker::Sync {
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>;
     fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn delete(&mut self,db: JulieDatabase, index: &str)-> Result<bool,String>;
 }
 
+//    fn init(db: JulieDatabase) -> Result<Self, String>;
 
+pub trait StorageBoxClone {
+    fn clone_box(&self) -> Box<dyn JulieStorage>;
+}
+
+impl<T> StorageBoxClone for T
+where
+    T: 'static + JulieStorage + Clone,
+{
+    fn clone_box(&self) -> Box<dyn JulieStorage> {
+        Box::new(self.clone())
+    }
+}
+
+// We can now implement Clone manually by forwarding to clone_box.
+impl Clone for Box<dyn JulieStorage> {
+    fn clone(&self) -> Box<dyn JulieStorage> {
+        self.clone_box()
+    }
+}

@@ -8,13 +8,13 @@ mod storage;
 
 use crate::storage::interface::{JulieStorage,JulieDatabase,JulieDatabaseItem};
 // use crate::storage::sled::{SledDb};
-use crate::storage::vault::{VaultStorage};
+use crate::storage::vault::{VaultStorage, init as init_vault};
 
 use crate::lib::aes;
 
 fn main() {
-    let client_storage = VaultStorage::init(JulieDatabase::Client).unwrap();
-    let mut service_storage = VaultStorage::init(JulieDatabase::Service).unwrap();
+    let mut client_storage = init_vault(JulieDatabase::Client).unwrap();
+    let mut service_storage = init_vault(JulieDatabase::Service).unwrap();
 
     let matches = App::new("\x1b[0;92mjc\x1b[0m")
         .about("\x1b[0;94mJulie admin tools.\x1b[0m")
@@ -137,7 +137,7 @@ fn main() {
             match push_matches.subcommand() {
                 ("register", Some(_)) => {
                     let client = auth::client::ClientAuth::new();
-                    assert!(client_storage.clone().create(JulieDatabaseItem::Client(client.clone())).unwrap());
+                    assert!(client_storage.create(JulieDatabaseItem::Client(client.clone())).unwrap());
                     println!("{:#?}",client);
                 }
                 ("list", Some(_)) => {
@@ -148,7 +148,7 @@ fn main() {
                     // let clients = auth::client::get_uid_indexes();
                     println!("{:#?}", &args.clone().value_of("uid").unwrap());
 
-                    match client_storage.clone().read(JulieDatabase::Client,&args.value_of("uid").unwrap()){
+                    match client_storage.read(JulieDatabase::Client,&args.value_of("uid").unwrap()){
                         Ok(item)=>match item{
                             JulieDatabaseItem::Client(client)=>{
                                 println!("{:#?}", client)
@@ -164,7 +164,7 @@ fn main() {
                     }
                 }
                 ("delete", Some(args)) => {
-                    let status = client_storage.clone().delete(JulieDatabase::Client,&args.value_of("uid").unwrap()).unwrap();
+                    let status = client_storage.delete(JulieDatabase::Client,&args.value_of("uid").unwrap()).unwrap();
                     println!("{}",status)
         
                 }
@@ -174,7 +174,7 @@ fn main() {
         ("service", Some(push_matches)) => {
             match push_matches.subcommand() {
                     ("register", Some(args)) => {
-                        match service_storage.clone().read(JulieDatabase::Service,&args.value_of("name").unwrap()){
+                        match service_storage.read(JulieDatabase::Service,&args.value_of("name").unwrap()){
                             Ok(item)=> match item{
                                 JulieDatabaseItem::Service(service)=>{
                                     println!("Service {} exists.", service.name);
@@ -208,14 +208,14 @@ fn main() {
 
                     }
                     ("delete", Some(args)) => {
-                        let status = service_storage.clone().delete(JulieDatabase::Service,&args.value_of("name").unwrap()).unwrap();
+                        let status = service_storage.delete(JulieDatabase::Service,&args.value_of("name").unwrap()).unwrap();
                         println!("{}",status)
                         
                     }
                     ("read", Some(args)) => {
                         println!("{:#?}", &args.clone().value_of("name").unwrap());
 
-                        match service_storage.clone().read(JulieDatabase::Service,&args.value_of("name").unwrap()){
+                        match service_storage.read(JulieDatabase::Service,&args.value_of("name").unwrap()){
                             Ok(item)=>match item{
                                 JulieDatabaseItem::Service(service)=>{
                                     println!("{:#?}", service)
