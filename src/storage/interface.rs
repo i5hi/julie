@@ -41,6 +41,7 @@ pub enum JulieDatabaseItem{
 pub trait JulieStorage: Send + std::fmt::Debug + StorageBoxClone + std::marker::Sync {
     fn create(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn read(&mut self,db: JulieDatabase, index: &str)-> Result<JulieDatabaseItem,String>;
+    fn list(&mut self, db: JulieDatabase) -> Result<Vec<String>, String>;
     fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>;
     fn delete(&mut self,db: JulieDatabase, index: &str)-> Result<bool,String>;
 }

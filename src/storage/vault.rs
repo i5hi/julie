@@ -68,6 +68,31 @@ impl JulieStorage for VaultStorage{
             }
         }
     }
+    fn list(&mut self,db: JulieDatabase)-> Result<Vec<String>,String>{
+        match db{
+            JulieDatabase::Client=>{
+                self.http_client.secret_backend("julie-test-client");
+                let secrets = self.http_client.list_secrets("/");
+
+                if secrets.is_ok() {
+                    Ok(secrets.unwrap())
+                }
+                else{
+                    Err("None".to_string())
+                }            }
+            JulieDatabase::Service=>{
+                self.http_client.secret_backend("julie-test-service");
+                let secrets = self.http_client.list_secrets("/");
+                if secrets.is_ok() {
+                    Ok(secrets.unwrap())
+                }
+                else{
+                    Err("None".to_string())
+                }   
+            }
+
+        }
+    }
     fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>{
         match object{
             JulieDatabaseItem::Client(client)=>{
@@ -127,6 +152,8 @@ mod tests {
         };
         assert_eq!(read.clone().uid, client.clone().uid);
         assert_eq!(read.clone().apikey, client.clone().apikey);
+        let uids = client_storage.list(JulieDatabase::Client);
+        println!("{:#?}",uids);
         assert!(client_storage.delete(JulieDatabase::Client,&read.uid).unwrap());
         let fail_read = client_storage.read(JulieDatabase::Client,&client.clone().uid);
         match fail_read{

@@ -102,6 +102,9 @@ impl JulieStorage for SledDb {
         }
      
     }
+    fn list(&mut self, db:JulieDatabase)-> Result<Vec<String>,String>{
+        return Err("None".to_string())
+    }
     fn update(&mut self, object: JulieDatabaseItem) -> Result<bool, String>{
         match object {
             JulieDatabaseItem::Client(client)=>{
